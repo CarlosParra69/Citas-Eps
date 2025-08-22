@@ -98,6 +98,62 @@ class CitaSeeder extends Seeder
                 'diagnostico' => null,
                 'tratamiento' => null,
                 'costo' => 55000.00
+            ],
+            // Citas adicionales para tener más datos de prueba
+            [
+                'paciente_id' => 1,
+                'medico_id' => 3,
+                'fecha_hora' => Carbon::now()->subDays(15)->setTime(14, 30),
+                'estado' => 'completada',
+                'motivo_consulta' => 'Revisión de piel',
+                'observaciones' => 'Paciente con manchas en la piel',
+                'diagnostico' => 'Melasma leve',
+                'tratamiento' => 'Crema despigmentante',
+                'costo' => 65000.00
+            ],
+            [
+                'paciente_id' => 2,
+                'medico_id' => 1,
+                'fecha_hora' => Carbon::now()->subDays(20)->setTime(10, 0),
+                'estado' => 'completada',
+                'motivo_consulta' => 'Control médico general',
+                'observaciones' => 'Paciente se siente bien',
+                'diagnostico' => 'Estado de salud normal',
+                'tratamiento' => 'Continuar con hábitos saludables',
+                'costo' => 45000.00
+            ],
+            [
+                'paciente_id' => 3,
+                'medico_id' => 2,
+                'fecha_hora' => Carbon::now()->subDays(8)->setTime(11, 30),
+                'estado' => 'completada',
+                'motivo_consulta' => 'Dolor en el pecho ocasional',
+                'observaciones' => 'Electrocardiograma solicitado',
+                'diagnostico' => 'Arritmia leve',
+                'tratamiento' => 'Medicamento antiarrítmico',
+                'costo' => 90000.00
+            ],
+            [
+                'paciente_id' => 1,
+                'medico_id' => 4,
+                'fecha_hora' => Carbon::now()->addDays(5)->setTime(16, 30),
+                'estado' => 'confirmada',
+                'motivo_consulta' => 'Consulta de seguimiento',
+                'observaciones' => 'Control post-tratamiento',
+                'diagnostico' => null,
+                'tratamiento' => null,
+                'costo' => 55000.00
+            ],
+            [
+                'paciente_id' => 3,
+                'medico_id' => 5,
+                'fecha_hora' => Carbon::now()->subDays(25)->setTime(8, 30),
+                'estado' => 'completada',
+                'motivo_consulta' => 'Consulta familiar',
+                'observaciones' => 'Consulta para hijo menor',
+                'diagnostico' => 'Desarrollo normal',
+                'tratamiento' => 'Vitaminas',
+                'costo' => 40000.00
             ]
         ];
 

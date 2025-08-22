@@ -83,7 +83,7 @@ class ReportesController extends Controller
             INNER JOIN especialidades e ON m.especialidad_id = e.id
             WHERE p.activo = 1
             GROUP BY p.id, p.nombre, p.apellido, p.cedula, p.email, p.genero, p.fecha_nacimiento, p.eps
-            HAVING total_citas >= 2
+            HAVING total_citas >= 1
             ORDER BY total_citas DESC, porcentaje_asistencia DESC
         ");
 
@@ -191,7 +191,7 @@ class ReportesController extends Controller
                 COUNT(CASE WHEN p.genero = 'F' THEN 1 END) as pacientes_femenino,
                 COUNT(CASE WHEN p.genero = 'M' THEN 1 END) as pacientes_masculino,
                 COUNT(DISTINCT e.id) as especialidades_diferentes,
-                GROUP_CONCAT(DISTINCT e.nombre ORDER BY COUNT(c.id) DESC SEPARATOR ', ') as especialidades_mas_solicitadas,
+                GROUP_CONCAT(DISTINCT e.nombre ORDER BY e.nombre SEPARATOR ', ') as especialidades_mas_solicitadas,
                 AVG(c.costo) as promedio_costo,
                 ROUND((COUNT(CASE WHEN c.estado = 'completada' THEN 1 END) * 100.0 / COUNT(c.id)), 2) as tasa_asistencia,
                 COUNT(DISTINCT c.paciente_id) as pacientes_unicos,

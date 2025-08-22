@@ -1,8 +1,13 @@
 {
 	"info": {
-		"name": "Sistema Citas Médicas EPS",
-		"description": "API REST para gestión de citas médicas en EPS con autenticación Laravel Sanctum",
-		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+		"name": "Sistema Citas Médicas EPS - COMPLETO",
+		"description": "API REST completa para gestión de citas médicas en EPS con autenticación Laravel Sanctum. Incluye TODOS los endpoints CRUD y reportes.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"version": {
+			"major": 2,
+			"minor": 0,
+			"patch": 0
+		}
 	},
 	"variable": [
 		{
@@ -284,6 +289,82 @@
 							"path": ["medicos"]
 						}
 					}
+				},
+				{
+					"name": "Actualizar Médico",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Diego Actualizado\",\n    \"apellido\": \"Ramírez\",\n    \"cedula\": \"98765432\",\n    \"registro_medico\": \"RM006\",\n    \"telefono\": \"3009876543\",\n    \"email\": \"diego.ramirez@hospital.com\",\n    \"especialidad_id\": 2,\n    \"horarios_atencion\": {\n        \"lunes\": [\"09:00\", \"13:00\", \"15:00\", \"19:00\"],\n        \"martes\": [\"09:00\", \"13:00\", \"15:00\", \"19:00\"],\n        \"miercoles\": [\"09:00\", \"13:00\"],\n        \"jueves\": [\"09:00\", \"13:00\", \"15:00\", \"19:00\"],\n        \"viernes\": [\"09:00\", \"13:00\", \"15:00\", \"19:00\"]\n    },\n    \"activo\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/medicos/6",
+							"host": ["{{base_url}}"],
+							"path": ["medicos", "6"]
+						}
+					}
+				},
+				{
+					"name": "Eliminar Médico",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/medicos/6",
+							"host": ["{{base_url}}"],
+							"path": ["medicos", "6"]
+						}
+					}
+				},
+				{
+					"name": "Buscar Médicos por Especialidad",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/medicos?especialidad_id=1",
+							"host": ["{{base_url}}"],
+							"path": ["medicos"],
+							"query": [
+								{
+									"key": "especialidad_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Buscar Médicos por Nombre",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{base_url}}/medicos?search=Carlos",
+							"host": ["{{base_url}}"],
+							"path": ["medicos"],
+							"query": [
+								{
+									"key": "search",
+									"value": "Carlos"
+								}
+							]
+						}
+					}
 				}
 			]
 		},
@@ -363,6 +444,71 @@
 							"raw": "{{base_url}}/pacientes",
 							"host": ["{{base_url}}"],
 							"path": ["pacientes"]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Paciente",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"María Actualizada\",\n    \"apellido\": \"Rodríguez\",\n    \"cedula\": \"7070707070\",\n    \"fecha_nacimiento\": \"1988-05-15\",\n    \"genero\": \"F\",\n    \"telefono\": \"3107070707\",\n    \"email\": \"maria.rodriguez@test.com\",\n    \"direccion\": \"Carrera 50 #25-30 - Actualizada\",\n    \"eps\": \"Compensar EPS\",\n    \"alergias\": \"Penicilina\",\n    \"medicamentos_actuales\": \"Vitaminas, Calcio\",\n    \"activo\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/pacientes/7",
+							"host": ["{{base_url}}"],
+							"path": ["pacientes", "7"]
+						}
+					}
+				},
+				{
+					"name": "Eliminar Paciente",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/pacientes/7",
+							"host": ["{{base_url}}"],
+							"path": ["pacientes", "7"]
+						}
+					}
+				},
+				{
+					"name": "Buscar Pacientes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/pacientes?search=Juan",
+							"host": ["{{base_url}}"],
+							"path": ["pacientes"],
+							"query": [
+								{
+									"key": "search",
+									"value": "Juan"
+								}
+							]
 						}
 					}
 				}
@@ -528,6 +674,102 @@
 							"raw": "{{base_url}}/citas/9",
 							"host": ["{{base_url}}"],
 							"path": ["citas", "9"]
+						}
+					}
+				},
+				{
+					"name": "Filtrar Citas por Paciente",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/citas?paciente_id=1",
+							"host": ["{{base_url}}"],
+							"path": ["citas"],
+							"query": [
+								{
+									"key": "paciente_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Filtrar Citas por Médico",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/citas?medico_id=1",
+							"host": ["{{base_url}}"],
+							"path": ["citas"],
+							"query": [
+								{
+									"key": "medico_id",
+									"value": "1"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Filtrar Citas por Estado",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/citas?estado=completada",
+							"host": ["{{base_url}}"],
+							"path": ["citas"],
+							"query": [
+								{
+									"key": "estado",
+									"value": "completada"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Filtrar Citas por Rango de Fechas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/citas?fecha_inicio=2025-08-01&fecha_fin=2025-08-31",
+							"host": ["{{base_url}}"],
+							"path": ["citas"],
+							"query": [
+								{
+									"key": "fecha_inicio",
+									"value": "2025-08-01"
+								},
+								{
+									"key": "fecha_fin",
+									"value": "2025-08-31"
+								}
+							]
 						}
 					}
 				}
