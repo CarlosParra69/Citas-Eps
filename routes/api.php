@@ -25,12 +25,13 @@ Route::get('/medicos', [MedicoController::class, 'index']);
 Route::get('/medicos/{id}', [MedicoController::class, 'show']);
 Route::get('/medicos/{id}/disponibilidad', [MedicoController::class, 'disponibilidad']);
 
-// Rutas protegidas con autenticación
-Route::middleware('auth:sanctum')->group(function () {
+// Rutas protegidas con autenticación JWT
+Route::middleware('auth:api')->group(function () {
     
     // Autenticación
     Route::post('/auth/logout', [AuthController::class, 'logout']);
     Route::get('/auth/me', [AuthController::class, 'me']);
+    Route::post('/auth/refresh', [AuthController::class, 'refresh']);
     
     // Especialidades (CRUD completo)
     Route::apiResource('especialidades', EspecialidadController::class)->except(['index', 'show']);

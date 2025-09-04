@@ -1,7 +1,7 @@
 {
 	"info": {
 		"name": "Sistema Citas Médicas EPS - COMPLETO",
-		"description": "API REST completa para gestión de citas médicas en EPS con autenticación Laravel Sanctum. Incluye TODOS los endpoints CRUD y reportes.",
+		"description": "API REST completa para gestión de citas médicas en EPS con autenticación JWT. Incluye TODOS los endpoints CRUD y reportes.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"version": {
 			"major": 2,
@@ -126,6 +126,36 @@
 							"path": ["auth", "logout"]
 						}
 					}
+				},
+				{
+					"name": "Refresh Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/refresh",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "refresh"]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    pm.collectionVariables.set('token', response.data.access_token);",
+									"}"
+								]
+							}
+						}
+					]
 				}
 			]
 		},

@@ -1,96 +1,164 @@
-# Sistema de Reserva de Citas Médicas - EPS
+# 🏥 Sistema de Gestión de Citas Médicas EPS
 
-API REST desarrollada en Laravel para la gestión completa de un sistema de
-reserva de citas médicas en una EPS (Entidad Promotora de Salud).
+## 📋 Descripción del Proyecto
 
-## 🚀 Características Principales
+API REST desarrollada en **Laravel** para la gestión completa de un sistema de reserva de citas médicas en una EPS (Entidad Promotora de Salud). El sistema permite administrar especialidades médicas, médicos, pacientes y citas, con un robusto sistema de autenticación JWT y reportes avanzados.
 
-- **CRUD completo** para Especialidades, Médicos, Pacientes y Citas
-- **Autenticación con Laravel Sanctum** (tokens API)
-- **Consultas SQL compuestas** para reportes avanzados
-- **Optimización de consultas** con Eager Loading
-- **Validaciones robustas** en todos los endpoints
-- **Documentación completa** para Postman
-- **Seeders** con datos de prueba
+## ✨ Características Principales
 
-## 📋 Requisitos del Sistema
+-   🔐 **Autenticación JWT** - Tokens seguros con renovación automática
+-   👥 **Gestión de Pacientes** - CRUD completo con historial médico
+-   👨‍⚕️ **Gestión de Médicos** - Control de especialidades y horarios
+-   📅 **Sistema de Citas** - Programación con estados y seguimiento
+-   🏥 **Especialidades Médicas** - Catálogo de especialidades disponibles
+-   📊 **Reportes Avanzados** - Consultas SQL compuestas para análisis
+-   🚀 **API RESTful** - Endpoints organizados y documentados
+-   📱 **Compatible Web/Móvil** - Ideal para aplicaciones frontend y móviles
 
-- PHP >= 8.2
-- MySQL >= 8.0
-- Composer
-- Laravel 12.x
+## 🛠️ Tecnologías Utilizadas
 
-## 🛠️ Instalación
+-   **Backend:** Laravel 11.x
+-   **Base de Datos:** MySQL 8.0+
+-   **Autenticación:** JWT (JSON Web Tokens)
+-   **Lenguaje:** PHP 8.2+
+-   **Gestor de Dependencias:** Composer
 
-### 1. Clonar el repositorio
+## 📦 Instalación y Configuración
+
+### Prerequisitos
+
+-   PHP >= 8.2
+-   MySQL >= 8.0
+-   Composer
+-   Git
+
+### Pasos de Instalación
+
+1. **Clonar el repositorio**
 
 ```bash
-git clone <repository-url>
+git clone <url-del-repositorio>
 cd citas-medicas
 ```
 
-### 2. Instalar dependencias
+2. **Instalar dependencias**
 
 ```bash
 composer install
+composer require tymon/jwt-auth
 ```
 
-### 3. Configurar base de datos
+3. **Configurar base de datos**
 
-Editar el archivo `.env` con tus credenciales de MySQL:
+```sql
+CREATE DATABASE citas_medicas_eps CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
+
+4. **Configurar variables de entorno**
+
+Crear archivo `.env` con las siguientes configuraciones:
 
 ```env
+APP_NAME="Sistema Citas Médicas EPS"
+APP_ENV=local
+APP_KEY=base64:Y8dtwXMj8iy/EMjA1P7HlKJcrlxy7vWr3VXYPY0cW+U=
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+# Base de Datos
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
 DB_PORT=3306
 DB_DATABASE=citas_medicas_eps
 DB_USERNAME=root
 DB_PASSWORD=tu_password
+
+# JWT Configuration
+JWT_SECRET=tu_jwt_secret_key
+JWT_TTL=60
+JWT_REFRESH_TTL=20160
+JWT_ALGO=HS256
+JWT_BLACKLIST_ENABLED=true
 ```
 
-### 4. Ejecutar migraciones y seeders
+5. **Generar JWT secret y ejecutar migraciones**
 
 ```bash
+php artisan jwt:secret
 php artisan migrate:fresh --seed
 ```
 
-### 5. Iniciar el servidor
+6. **Iniciar el servidor**
 
 ```bash
 php artisan serve
 ```
 
-La API estará disponible en: `http://localhost:8000/api`
+El servidor estará disponible en: `http://localhost:8000`
 
-## 📊 Estructura de la Base de Datos
+## 🗃️ Estructura de la Base de Datos
 
 ### Tablas Principales
 
-1. **especialidades**
-   - id, nombre, descripcion, activo, timestamps
+| Tabla              | Descripción                           |
+| ------------------ | ------------------------------------- |
+| **especialidades** | Catálogo de especialidades médicas    |
+| **medicos**        | Información de médicos y sus horarios |
+| **pacientes**      | Registro de pacientes del sistema     |
+| **citas**          | Programación y seguimiento de citas   |
 
-2. **medicos**
-   - id, nombre, apellido, cedula, registro_medico, telefono, email
-   - especialidad_id (FK), horarios_atencion (JSON), activo, timestamps
+### Relaciones
 
-3. **pacientes**
-   - id, nombre, apellido, cedula, fecha_nacimiento, genero, telefono, email
-   - direccion, eps, alergias, medicamentos_actuales, activo, timestamps
+-   `medicos` → `especialidades` (Many to One)
+-   `citas` → `pacientes` (Many to One)
+-   `citas` → `medicos` (Many to One)
 
-4. **citas**
-   - id, paciente_id (FK), medico_id (FK), fecha_hora, estado, motivo_consulta
-   - observaciones, diagnostico, tratamiento, costo, timestamps
+## 🔐 Sistema de Autenticación JWT
 
-5. **personal_access_tokens** (Laravel Sanctum)
+### Flujo de Autenticación
 
-## 🔐 Autenticación
+1. **Registro/Login** → Obtención de token JWT
+2. **Requests** → Incluir token en header Authorization
+3. **Renovación** → Refresh token antes de expiración
+4. **Logout** → Invalidación del token
+
+### Configuración de Tokens
+
+-   **Token TTL:** 60 minutos
+-   **Refresh TTL:** 2 semanas
+-   **Algoritmo:** HS256
+-   **Blacklist:** Habilitada para logout seguro
+
+## 📚 Documentación de la API
+
+### Base URL
+
+```
+http://localhost:8000/api
+```
+
+### Headers Requeridos
+
+Para endpoints protegidos:
+
+```http
+Authorization: Bearer {jwt_token}
+Content-Type: application/json
+```
+
+---
+
+## 🔑 Autenticación
 
 ### Registro de Paciente
 
 ```http
-POST /api/auth/register
-Content-Type: application/json
+POST /auth/register
+```
 
+**Body:**
+
+```json
 {
     "nombre": "Juan",
     "apellido": "Pérez",
@@ -104,226 +172,524 @@ Content-Type: application/json
 }
 ```
 
+**Respuesta:**
+
+```json
+{
+    "success": true,
+    "message": "Paciente registrado exitosamente",
+    "data": {
+        "paciente": {...},
+        "access_token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+        "token_type": "Bearer",
+        "expires_in": 3600
+    }
+}
+```
+
 ### Login
 
 ```http
-POST /api/auth/login
-Content-Type: application/json
+POST /auth/login
+```
 
+**Body:**
+
+```json
 {
     "cedula": "1234567890",
     "email": "juan@email.com"
 }
 ```
 
-### Usar Token
+### Información del Usuario
 
 ```http
-Authorization: Bearer {token}
+GET /auth/me
 ```
 
-## 📚 Endpoints de la API
+_Requiere autenticación_
 
-### Rutas Públicas
+### Renovar Token
 
-- `GET /api/test` - Prueba de conectividad
-- `POST /api/auth/register` - Registro de pacientes
-- `POST /api/auth/login` - Login de pacientes
-- `GET /api/especialidades` - Listar especialidades
-- `GET /api/especialidades/{id}` - Ver especialidad
-- `GET /api/medicos` - Listar médicos
-- `GET /api/medicos/{id}` - Ver médico
-- `GET /api/medicos/{id}/disponibilidad` - Ver disponibilidad
+```http
+POST /auth/refresh
+```
 
-### Rutas Protegidas (requieren autenticación)
+_Requiere autenticación_
 
-#### Autenticación
+### Logout
 
-- `POST /api/auth/logout` - Cerrar sesión
-- `GET /api/auth/me` - Información del usuario autenticado
+```http
+POST /auth/logout
+```
 
-#### Especialidades (CRUD)
+_Requiere autenticación_
 
-- `POST /api/especialidades` - Crear especialidad
-- `PUT /api/especialidades/{id}` - Actualizar especialidad
-- `DELETE /api/especialidades/{id}` - Eliminar especialidad
+---
 
-#### Médicos (CRUD)
+## 🏥 Especialidades
 
-- `POST /api/medicos` - Crear médico
-- `PUT /api/medicos/{id}` - Actualizar médico
-- `DELETE /api/medicos/{id}` - Eliminar médico
+### Listar Especialidades
 
-#### Pacientes (CRUD)
+```http
+GET /especialidades
+```
 
-- `GET /api/pacientes` - Listar pacientes
-- `POST /api/pacientes` - Crear paciente
-- `GET /api/pacientes/{id}` - Ver paciente
-- `PUT /api/pacientes/{id}` - Actualizar paciente
-- `DELETE /api/pacientes/{id}` - Eliminar paciente
-- `GET /api/pacientes/{id}/historial` - Historial médico
+**Respuesta:**
 
-#### Citas (CRUD)
+```json
+{
+    "success": true,
+    "data": [
+        {
+            "id": 1,
+            "nombre": "Medicina General",
+            "descripcion": "Atención médica general y preventiva",
+            "activo": true,
+            "created_at": "2024-01-01T00:00:00.000000Z"
+        }
+    ]
+}
+```
 
-- `GET /api/citas` - Listar citas
-- `POST /api/citas` - Crear cita
-- `GET /api/citas/{id}` - Ver cita
-- `PUT /api/citas/{id}` - Actualizar cita
-- `DELETE /api/citas/{id}` - Eliminar cita
-- `PATCH /api/citas/{id}/estado` - Cambiar estado de cita
-- `GET /api/citas-hoy` - Citas de hoy
-- `GET /api/proximas-citas` - Próximas citas
+### Ver Especialidad
 
-#### Reportes (Consultas SQL Compuestas)
+```http
+GET /especialidades/{id}
+```
 
-- `GET /api/reportes/dashboard` - Dashboard resumen
-- `GET /api/reportes/medicos-mas-citas` - Médicos con más citas
-- `GET /api/reportes/pacientes-historial` - Pacientes con historial completo
-- `GET /api/reportes/disponibilidad-especialidades` - Análisis por especialidad
-- `GET /api/reportes/ingresos-detallado` - Reporte financiero
-- `GET /api/reportes/patrones-citas` - Patrones de comportamiento
+### Crear Especialidad
 
-## 🔍 Consultas SQL Compuestas
+```http
+POST /especialidades
+```
 
-### 1. Médicos con Mayor Número de Citas
+_Requiere autenticación_
 
-Analiza los médicos más productivos con estadísticas de ingresos y
-especialidades.
+**Body:**
 
-### 2. Pacientes con Historial Completo
+```json
+{
+    "nombre": "Cardiología",
+    "descripcion": "Especialidad del corazón y sistema cardiovascular",
+    "activo": true
+}
+```
 
-Proporciona análisis demográfico y patrones de consulta de pacientes frecuentes.
+### Actualizar Especialidad
 
-### 3. Disponibilidad por Especialidades
+```http
+PUT /especialidades/{id}
+```
 
-Métricas de demanda, ocupación y eficiencia por especialidad médica.
+_Requiere autenticación_
 
-### 4. Reporte de Ingresos Detallado
+### Eliminar Especialidad
+
+```http
+DELETE /especialidades/{id}
+```
+
+_Requiere autenticación_
+
+---
+
+## 👨‍⚕️ Médicos
+
+### Listar Médicos
+
+```http
+GET /medicos
+```
+
+**Parámetros de consulta:**
+
+-   `especialidad_id` - Filtrar por especialidad
+-   `search` - Buscar por nombre
+
+### Ver Médico
+
+```http
+GET /medicos/{id}
+```
+
+### Disponibilidad del Médico
+
+```http
+GET /medicos/{id}/disponibilidad?fecha=2024-12-20
+```
+
+### Crear Médico
+
+```http
+POST /medicos
+```
+
+_Requiere autenticación_
+
+**Body:**
+
+```json
+{
+    "nombre": "Carlos",
+    "apellido": "Rodríguez",
+    "cedula": "12345678",
+    "registro_medico": "RM001",
+    "telefono": "3001234567",
+    "email": "carlos@hospital.com",
+    "especialidad_id": 1,
+    "horarios_atencion": {
+        "lunes": ["08:00", "12:00", "14:00", "18:00"],
+        "martes": ["08:00", "12:00", "14:00", "18:00"],
+        "miercoles": ["08:00", "12:00"],
+        "jueves": ["08:00", "12:00", "14:00", "18:00"],
+        "viernes": ["08:00", "12:00", "14:00", "18:00"]
+    },
+    "activo": true
+}
+```
+
+### Actualizar Médico
+
+```http
+PUT /medicos/{id}
+```
+
+_Requiere autenticación_
+
+### Eliminar Médico
+
+```http
+DELETE /medicos/{id}
+```
+
+_Requiere autenticación_
+
+---
+
+## 👤 Pacientes
+
+### Listar Pacientes
+
+```http
+GET /pacientes
+```
+
+_Requiere autenticación_
+
+**Parámetros de consulta:**
+
+-   `search` - Buscar por nombre o cédula
+
+### Ver Paciente
+
+```http
+GET /pacientes/{id}
+```
+
+_Requiere autenticación_
+
+### Historial Médico
+
+```http
+GET /pacientes/{id}/historial
+```
+
+_Requiere autenticación_
+
+### Crear Paciente
+
+```http
+POST /pacientes
+```
+
+_Requiere autenticación_
+
+### Actualizar Paciente
+
+```http
+PUT /pacientes/{id}
+```
+
+_Requiere autenticación_
+
+### Eliminar Paciente
+
+```http
+DELETE /pacientes/{id}
+```
+
+_Requiere autenticación_
+
+---
+
+## 📅 Citas
+
+### Listar Citas
+
+```http
+GET /citas
+```
+
+_Requiere autenticación_
+
+**Parámetros de consulta:**
+
+-   `paciente_id` - Filtrar por paciente
+-   `medico_id` - Filtrar por médico
+-   `estado` - Filtrar por estado
+-   `fecha_inicio` - Fecha de inicio
+-   `fecha_fin` - Fecha de fin
+
+### Ver Cita
+
+```http
+GET /citas/{id}
+```
+
+_Requiere autenticación_
+
+### Crear Cita
+
+```http
+POST /citas
+```
+
+_Requiere autenticación_
+
+**Body:**
+
+```json
+{
+    "paciente_id": 1,
+    "medico_id": 1,
+    "fecha_hora": "2024-12-25 10:00:00",
+    "motivo_consulta": "Control general de salud",
+    "observaciones": "Paciente solicita chequeo completo"
+}
+```
+
+### Actualizar Cita
+
+```http
+PUT /citas/{id}
+```
+
+_Requiere autenticación_
+
+### Cambiar Estado de Cita
+
+```http
+PATCH /citas/{id}/estado
+```
+
+_Requiere autenticación_
+
+**Body:**
+
+```json
+{
+    "estado": "completada",
+    "diagnostico": "Paciente en buen estado de salud",
+    "tratamiento": "Continuar con hábitos saludables",
+    "costo": 50000
+}
+```
+
+### Citas de Hoy
+
+```http
+GET /citas-hoy
+```
+
+_Requiere autenticación_
+
+### Próximas Citas
+
+```http
+GET /proximas-citas
+```
+
+_Requiere autenticación_
+
+### Eliminar Cita
+
+```http
+DELETE /citas/{id}
+```
+
+_Requiere autenticación_
+
+---
+
+## 📊 Reportes y Análisis
+
+### Dashboard Resumen
+
+```http
+GET /reportes/dashboard
+```
+
+_Requiere autenticación_
+
+Retorna estadísticas generales del sistema.
+
+### Médicos con Más Citas
+
+```http
+GET /reportes/medicos-mas-citas
+```
+
+_Requiere autenticación_
+
+Análisis de productividad de médicos con estadísticas de ingresos.
+
+### Pacientes con Historial Completo
+
+```http
+GET /reportes/pacientes-historial
+```
+
+_Requiere autenticación_
+
+Análisis demográfico y patrones de consulta de pacientes.
+
+### Disponibilidad por Especialidades
+
+```http
+GET /reportes/disponibilidad-especialidades
+```
+
+_Requiere autenticación_
+
+Métricas de demanda y eficiencia por especialidad médica.
+
+### Reporte de Ingresos Detallado
+
+```http
+GET /reportes/ingresos-detallado
+```
+
+_Requiere autenticación_
 
 Análisis financiero temporal con ingresos reales vs potenciales.
 
-### 5. Patrones de Citas
+### Análisis de Patrones de Citas
+
+```http
+GET /reportes/patrones-citas
+```
+
+_Requiere autenticación_
 
 Análisis de comportamiento temporal y demográfico de las citas.
 
-## ⚡ Optimizaciones Implementadas
-
-### Eager Loading
-
-```php
-// Cargar relaciones de forma eficiente
-$citas = Cita::with(['paciente', 'medico.especialidad'])->get();
-```
-
-### Scopes Personalizados
-
-```php
-// Filtros reutilizables en modelos
-$medicos = Medico::activos()->conEspecialidad()->get();
-```
-
-### Índices de Base de Datos
-
-```php
-// Índices para optimizar consultas frecuentes
-$table->index(['fecha_hora', 'medico_id']);
-$table->index(['paciente_id', 'fecha_hora']);
-```
-
-## 🧪 Datos de Prueba
-
-El sistema incluye seeders con:
-
-- 8 especialidades médicas
-- 5 médicos con diferentes especialidades
-- 6 pacientes con información completa
-- 8 citas en diferentes estados
-
-## 📱 Pruebas en Postman
-
-### Colección de Postman
-
-Importa la colección incluida en `/docs/postman_collection.json` que contiene:
-
-1. **Autenticación**
-   - Registro de paciente
-   - Login
-   - Logout
-
-2. **CRUD Especialidades**
-   - Crear, leer, actualizar, eliminar
-
-3. **CRUD Médicos**
-   - Operaciones completas con validaciones
-
-4. **CRUD Pacientes**
-   - Gestión completa de pacientes
-
-5. **CRUD Citas**
-   - Programación y gestión de citas
-
-6. **Reportes**
-   - Todas las consultas SQL compuestas
-
-### Variables de Entorno
-
-```json
-{
-    "base_url": "http://localhost:8000/api",
-    "token": "{{auth_token}}"
-}
-```
-
-## 🔒 Seguridad
-
-- **Validación de datos** en todos los endpoints
-- **Autenticación con tokens** Laravel Sanctum
-- **Protección CSRF** habilitada
-- **Sanitización de entradas** automática
-- **Validación de relaciones** antes de eliminar registros
+---
 
 ## 📈 Estados de Citas
 
-- `programada` - Cita recién creada
-- `confirmada` - Cita confirmada por el paciente
-- `en_curso` - Cita en desarrollo
-- `completada` - Cita finalizada exitosamente
-- `cancelada` - Cita cancelada
-- `no_asistio` - Paciente no asistió
+| Estado       | Descripción                     |
+| ------------ | ------------------------------- |
+| `programada` | Cita recién creada              |
+| `confirmada` | Cita confirmada por el paciente |
+| `en_curso`   | Cita en desarrollo              |
+| `completada` | Cita finalizada exitosamente    |
+| `cancelada`  | Cita cancelada                  |
+| `no_asistio` | Paciente no asistió             |
 
-## 🚨 Manejo de Errores
+## 🔒 Códigos de Respuesta HTTP
 
-La API retorna respuestas consistentes:
+| Código | Descripción                             |
+| ------ | --------------------------------------- |
+| `200`  | Operación exitosa                       |
+| `201`  | Recurso creado exitosamente             |
+| `401`  | No autorizado (token inválido/expirado) |
+| `404`  | Recurso no encontrado                   |
+| `422`  | Error de validación                     |
+| `500`  | Error interno del servidor              |
+
+## 📱 Datos de Prueba
+
+El sistema incluye datos de ejemplo para pruebas:
+
+### Pacientes de Prueba
 
 ```json
 {
-    "success": true/false,
-    "message": "Mensaje descriptivo",
-    "data": {...},
-    "errors": {...} // Solo en caso de error de validación
+    "cedula": "1010101010",
+    "email": "juan.perez@email.com"
 }
 ```
+
+```json
+{
+    "cedula": "2020202020",
+    "email": "laura.garcia@email.com"
+}
+```
+
+### Especialidades Disponibles
+
+-   Medicina General
+-   Cardiología
+-   Dermatología
+-   Ginecología
+-   Pediatría
+-   Neurología
+-   Ortopedia
+-   Psiquiatría
+
+## 🧪 Testing
+
+### Con Postman
+
+1. Importar la colección desde `docs/postman_collection.json`
+2. Configurar variables:
+    - `base_url`: `http://localhost:8000/api`
+3. Ejecutar login para obtener token automáticamente
+4. Probar endpoints protegidos
+
+### Flujo de Prueba Recomendado
+
+1. **Test de conectividad**: `GET /test`
+2. **Login**: `POST /auth/login`
+3. **Listar especialidades**: `GET /especialidades`
+4. **Listar médicos**: `GET /medicos`
+5. **Crear cita**: `POST /citas`
+6. **Ver reportes**: `GET /reportes/dashboard`
+
+## ⚡ Optimizaciones Implementadas
+
+-   **Eager Loading** para consultas eficientes
+-   **Scopes personalizados** para filtros reutilizables
+-   **Índices de base de datos** para mejor performance
+-   **Validaciones robustas** en todos los endpoints
+-   **Paginación** en listados grandes
+
+## 🚀 Características de Producción
+
+-   **Tokens JWT seguros** con expiración configurable
+-   **Blacklist de tokens** para logout seguro
+-   **Validación de datos** en todos los endpoints
+-   **Manejo de errores** consistente
+-   **Logs de actividad** para auditoría
+-   **Compatible con CORS** para aplicaciones frontend
 
 ## 🤝 Contribución
 
 1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+2. Crear rama para nueva funcionalidad (`git checkout -b feature/nueva-funcionalidad`)
+3. Commit cambios (`git commit -m 'Añadir nueva funcionalidad'`)
+4. Push a la rama (`git push origin feature/nueva-funcionalidad`)
+5. Crear Pull Request
 
 ## 📄 Licencia
 
-Este proyecto está bajo la Licencia MIT - ver el archivo
-[LICENSE.md](LICENSE.md) para detalles.
-
-## 👥 Autor
-
-Desarrollado para el sistema de gestión de citas médicas de EPS.
+Este proyecto está bajo la Licencia MIT.
 
 ---
 
-**¡La API está lista para usar! 🎉**
+**¡Sistema completo y listo para usar! 🎉**
 
-Para cualquier duda o problema, revisa la documentación o contacta al equipo de
-desarrollo.
+Para cualquier duda o problema, revisar los logs en `storage/logs/laravel.log` o contactar al equipo de desarrollo.
