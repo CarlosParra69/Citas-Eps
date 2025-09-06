@@ -37,7 +37,7 @@ API REST desarrollada en **Laravel** para la gestión completa de un sistema de 
 1. **Clonar el repositorio**
 
 ```bash
-git clone <url-del-repositorio>
+git clone https://github.com/CarlosParra69/Citas-Eps.git
 cd citas-medicas
 ```
 
@@ -63,7 +63,7 @@ APP_NAME="Sistema Citas Médicas EPS"
 APP_ENV=local
 APP_KEY=base64:Y8dtwXMj8iy/EMjA1P7HlKJcrlxy7vWr3VXYPY0cW+U=
 APP_DEBUG=true
-APP_URL=http://localhost:8000
+APP_URL=http://localhost:8000/api
 
 # Base de Datos
 DB_CONNECTION=mysql
