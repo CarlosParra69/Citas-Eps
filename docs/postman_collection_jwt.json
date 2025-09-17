@@ -1,0 +1,907 @@
+{
+	"info": {
+		"name": "Sistema Citas Médicas EPS - JWT Auth",
+		"description": "API REST completa para gestión de citas médicas en EPS con autenticación JWT. Incluye TODOS los endpoints CRUD y reportes.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"version": {
+			"major": 2,
+			"minor": 1,
+			"patch": 0
+		}
+	},
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000/api",
+			"type": "string"
+		},
+		{
+			"key": "jwt_token",
+			"value": "",
+			"type": "string"
+		}
+	],
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{jwt_token}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "🔐 Autenticación JWT",
+			"item": [
+				{
+					"name": "Registro Paciente",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Juan\",\n    \"apellido\": \"Pérez\",\n    \"cedula\": \"1234567890\",\n    \"fecha_nacimiento\": \"1990-01-01\",\n    \"genero\": \"M\",\n    \"telefono\": \"3001234567\",\n    \"email\": \"juan.perez@test.com\",\n    \"direccion\": \"Calle 123 #45-67\",\n    \"eps\": \"Sura EPS\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/register",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "register"]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 201) {",
+									"    const response = pm.response.json();",
+									"    if (response.success && response.data.access_token) {",
+									"        pm.collectionVariables.set('jwt_token', response.data.access_token);",
+									"        console.log('✅ Token JWT guardado automáticamente');",
+									"        console.log('Token expira en:', response.data.expires_in, 'segundos');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Login Paciente",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"cedula\": \"1234567890\",\n    \"email\": \"juan.perez@test.com\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/auth/login",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "login"]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.success && response.data.access_token) {",
+									"        pm.collectionVariables.set('jwt_token', response.data.access_token);",
+									"        console.log('✅ Login exitoso - Token JWT guardado');",
+									"        console.log('Token expira en:', response.data.expires_in, 'segundos');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Mi Perfil",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/me",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "me"]
+						}
+					}
+				},
+				{
+					"name": "Renovar Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/refresh",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "refresh"]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    const response = pm.response.json();",
+									"    if (response.success && response.data.access_token) {",
+									"        pm.collectionVariables.set('jwt_token', response.data.access_token);",
+									"        console.log('✅ Token renovado exitosamente');",
+									"    }",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/auth/logout",
+							"host": ["{{base_url}}"],
+							"path": ["auth", "logout"]
+						}
+					},
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"if (pm.response.code === 200) {",
+									"    pm.collectionVariables.set('jwt_token', '');",
+									"    console.log('✅ Logout exitoso - Token eliminado');",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "📋 Especialidades",
+			"item": [
+				{
+					"name": "Listar Especialidades (Público)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/especialidades",
+							"host": ["{{base_url}}"],
+							"path": ["especialidades"]
+						}
+					}
+				},
+				{
+					"name": "Ver Especialidad (Público)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/especialidades/1",
+							"host": ["{{base_url}}"],
+							"path": ["especialidades", "1"]
+						}
+					}
+				},
+				{
+					"name": "Crear Especialidad",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Cardiología\",\n    \"descripcion\": \"Especialidad médica que se encarga del estudio, diagnóstico y tratamiento de las enfermedades del corazón\",\n    \"activa\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/especialidades",
+							"host": ["{{base_url}}"],
+							"path": ["especialidades"]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Especialidad",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Cardiología Avanzada\",\n    \"descripcion\": \"Especialidad médica avanzada del corazón y sistema cardiovascular\",\n    \"activa\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/especialidades/1",
+							"host": ["{{base_url}}"],
+							"path": ["especialidades", "1"]
+						}
+					}
+				},
+				{
+					"name": "Eliminar Especialidad",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/especialidades/1",
+							"host": ["{{base_url}}"],
+							"path": ["especialidades", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "👨‍⚕️ Médicos",
+			"item": [
+				{
+					"name": "Listar Médicos (Público)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/medicos",
+							"host": ["{{base_url}}"],
+							"path": ["medicos"]
+						}
+					}
+				},
+				{
+					"name": "Ver Médico (Público)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/medicos/1",
+							"host": ["{{base_url}}"],
+							"path": ["medicos", "1"]
+						}
+					}
+				},
+				{
+					"name": "Disponibilidad Médico (Público)",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/medicos/1/disponibilidad?fecha=2024-12-20",
+							"host": ["{{base_url}}"],
+							"path": ["medicos", "1", "disponibilidad"],
+							"query": [
+								{
+									"key": "fecha",
+									"value": "2024-12-20"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Crear Médico",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Dr. Carlos\",\n    \"apellido\": \"Rodríguez\",\n    \"cedula\": \"98765432\",\n    \"registro_medico\": \"RM-12345\",\n    \"especialidad_id\": 1,\n    \"telefono\": \"3009876543\",\n    \"email\": \"carlos.rodriguez@hospital.com\",\n    \"horarios_atencion\": {\n        \"lunes\": {\"inicio\": \"08:00\", \"fin\": \"17:00\"},\n        \"martes\": {\"inicio\": \"08:00\", \"fin\": \"17:00\"},\n        \"miercoles\": {\"inicio\": \"08:00\", \"fin\": \"17:00\"},\n        \"jueves\": {\"inicio\": \"08:00\", \"fin\": \"17:00\"},\n        \"viernes\": {\"inicio\": \"08:00\", \"fin\": \"17:00\"}\n    },\n    \"tarifa_consulta\": 150000,\n    \"activo\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/medicos",
+							"host": ["{{base_url}}"],
+							"path": ["medicos"]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Médico",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"Dr. Carlos Alberto\",\n    \"apellido\": \"Rodríguez\",\n    \"cedula\": \"98765432\",\n    \"registro_medico\": \"RM-12345\",\n    \"especialidad_id\": 1,\n    \"telefono\": \"3009876543\",\n    \"email\": \"carlos.rodriguez@hospital.com\",\n    \"horarios_atencion\": {\n        \"lunes\": {\"inicio\": \"07:00\", \"fin\": \"18:00\"},\n        \"martes\": {\"inicio\": \"07:00\", \"fin\": \"18:00\"},\n        \"miercoles\": {\"inicio\": \"07:00\", \"fin\": \"18:00\"},\n        \"jueves\": {\"inicio\": \"07:00\", \"fin\": \"18:00\"},\n        \"viernes\": {\"inicio\": \"07:00\", \"fin\": \"18:00\"},\n        \"sabado\": {\"inicio\": \"08:00\", \"fin\": \"12:00\"}\n    },\n    \"tarifa_consulta\": 180000,\n    \"biografia\": \"Cardiólogo con 15 años de experiencia\",\n    \"activo\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/medicos/1",
+							"host": ["{{base_url}}"],
+							"path": ["medicos", "1"]
+						}
+					}
+				},
+				{
+					"name": "Eliminar Médico",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/medicos/1",
+							"host": ["{{base_url}}"],
+							"path": ["medicos", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "👥 Pacientes",
+			"item": [
+				{
+					"name": "Listar Pacientes",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/pacientes",
+							"host": ["{{base_url}}"],
+							"path": ["pacientes"]
+						}
+					}
+				},
+				{
+					"name": "Ver Paciente",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/pacientes/1",
+							"host": ["{{base_url}}"],
+							"path": ["pacientes", "1"]
+						}
+					}
+				},
+				{
+					"name": "Historial Médico Paciente",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/pacientes/1/historial",
+							"host": ["{{base_url}}"],
+							"path": ["pacientes", "1", "historial"]
+						}
+					}
+				},
+				{
+					"name": "Crear Paciente",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"María\",\n    \"apellido\": \"González\",\n    \"cedula\": \"87654321\",\n    \"fecha_nacimiento\": \"1985-05-15\",\n    \"genero\": \"F\",\n    \"telefono\": \"3007654321\",\n    \"email\": \"maria.gonzalez@test.com\",\n    \"direccion\": \"Carrera 50 #30-20\",\n    \"eps\": \"Nueva EPS\",\n    \"activo\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/pacientes",
+							"host": ["{{base_url}}"],
+							"path": ["pacientes"]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Paciente",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"nombre\": \"María Elena\",\n    \"apellido\": \"González\",\n    \"cedula\": \"87654321\",\n    \"fecha_nacimiento\": \"1985-05-15\",\n    \"genero\": \"F\",\n    \"telefono\": \"3007654321\",\n    \"email\": \"maria.gonzalez@test.com\",\n    \"direccion\": \"Carrera 50 #30-20 Apto 501\",\n    \"eps\": \"Nueva EPS\",\n    \"activo\": true\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/pacientes/1",
+							"host": ["{{base_url}}"],
+							"path": ["pacientes", "1"]
+						}
+					}
+				},
+				{
+					"name": "Eliminar Paciente",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/pacientes/1",
+							"host": ["{{base_url}}"],
+							"path": ["pacientes", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📅 Citas",
+			"item": [
+				{
+					"name": "Listar Citas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/citas",
+							"host": ["{{base_url}}"],
+							"path": ["citas"]
+						}
+					}
+				},
+				{
+					"name": "Ver Cita",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/citas/1",
+							"host": ["{{base_url}}"],
+							"path": ["citas", "1"]
+						}
+					}
+				},
+				{
+					"name": "Citas de Hoy",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/citas-hoy",
+							"host": ["{{base_url}}"],
+							"path": ["citas-hoy"]
+						}
+					}
+				},
+				{
+					"name": "Próximas Citas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/proximas-citas",
+							"host": ["{{base_url}}"],
+							"path": ["proximas-citas"]
+						}
+					}
+				},
+				{
+					"name": "Crear Cita",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"paciente_id\": 1,\n    \"medico_id\": 1,\n    \"fecha_hora\": \"2024-12-20 10:00:00\",\n    \"motivo\": \"Consulta de control\",\n    \"estado\": \"programada\",\n    \"costo\": 50000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/citas",
+							"host": ["{{base_url}}"],
+							"path": ["citas"]
+						}
+					}
+				},
+				{
+					"name": "Actualizar Cita",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"paciente_id\": 1,\n    \"medico_id\": 1,\n    \"fecha_hora\": \"2024-12-20 11:00:00\",\n    \"motivo\": \"Consulta de control - Seguimiento\",\n    \"estado\": \"confirmada\",\n    \"costo\": 55000\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/citas/1",
+							"host": ["{{base_url}}"],
+							"path": ["citas", "1"]
+						}
+					}
+				},
+				{
+					"name": "Cambiar Estado Cita",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							},
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"estado\": \"completada\",\n    \"observaciones\": \"Paciente en buen estado de salud\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/citas/1/estado",
+							"host": ["{{base_url}}"],
+							"path": ["citas", "1", "estado"]
+						}
+					}
+				},
+				{
+					"name": "Eliminar Cita",
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/citas/1",
+							"host": ["{{base_url}}"],
+							"path": ["citas", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "📊 Reportes Avanzados",
+			"item": [
+				{
+					"name": "Dashboard Resumen",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reportes/dashboard",
+							"host": ["{{base_url}}"],
+							"path": ["reportes", "dashboard"]
+						}
+					}
+				},
+				{
+					"name": "Médicos Más Productivos",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reportes/medicos-mas-citas?limite=10",
+							"host": ["{{base_url}}"],
+							"path": ["reportes", "medicos-mas-citas"],
+							"query": [
+								{
+									"key": "limite",
+									"value": "10"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Pacientes con Historial Completo",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reportes/pacientes-historial?min_citas=2",
+							"host": ["{{base_url}}"],
+							"path": ["reportes", "pacientes-historial"],
+							"query": [
+								{
+									"key": "min_citas",
+									"value": "2"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Disponibilidad por Especialidades",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reportes/disponibilidad-especialidades",
+							"host": ["{{base_url}}"],
+							"path": ["reportes", "disponibilidad-especialidades"]
+						}
+					}
+				},
+				{
+					"name": "Reporte Ingresos Detallado",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reportes/ingresos-detallado?fecha_inicio=2024-01-01&fecha_fin=2024-12-31",
+							"host": ["{{base_url}}"],
+							"path": ["reportes", "ingresos-detallado"],
+							"query": [
+								{
+									"key": "fecha_inicio",
+									"value": "2024-01-01"
+								},
+								{
+									"key": "fecha_fin",
+									"value": "2024-12-31"
+								}
+							]
+						}
+					}
+				},
+				{
+					"name": "Análisis Patrones de Citas",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/reportes/patrones-citas",
+							"host": ["{{base_url}}"],
+							"path": ["reportes", "patrones-citas"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "🧪 Pruebas",
+			"item": [
+				{
+					"name": "Test API",
+					"request": {
+						"auth": {
+							"type": "noauth"
+						},
+						"method": "GET",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/test",
+							"host": ["{{base_url}}"],
+							"path": ["test"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

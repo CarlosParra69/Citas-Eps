@@ -12,8 +12,23 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        // Evitar redirecciones a la ruta 'login' en APIs
+        $middleware->redirectGuestsTo(fn () => null);
+        
+        // Registrar middleware JWT personalizado
+        $middleware->alias([
+            'jwt.auth' => \App\Http\Middleware\JWTAuthMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Manejar excepciones de autenticación para APIs
+        $exceptions->render(function (Illuminate\Auth\AuthenticationException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No autenticado',
+                    'error' => 'Token de acceso requerido'
+                ], 401);
+            }
+        });
     })->create();

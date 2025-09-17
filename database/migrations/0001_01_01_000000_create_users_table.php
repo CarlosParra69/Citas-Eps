@@ -1,3 +1,4 @@
+
 <?php
 
 use Illuminate\Database\Migrations\Migration;
@@ -17,8 +18,14 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
+            $table->enum('tipo', ['admin', 'medico', 'paciente'])->default('admin');
+            $table->boolean('activo')->default(true);
             $table->rememberToken();
             $table->timestamps();
+            
+            // Índices para optimización
+            $table->index(['email', 'activo']);
+            $table->index('tipo');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {

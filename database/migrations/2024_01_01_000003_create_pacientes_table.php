@@ -21,8 +21,16 @@ return new class extends Migration
             $table->string('eps')->nullable();
             $table->text('alergias')->nullable();
             $table->text('medicamentos_actuales')->nullable();
+            $table->text('antecedentes_medicos')->nullable();
+            $table->string('contacto_emergencia')->nullable();
+            $table->string('telefono_emergencia')->nullable();
             $table->boolean('activo')->default(true);
             $table->timestamps();
+            
+            // Índices para optimización
+            $table->index(['cedula', 'activo']);
+            $table->index(['email', 'activo']);
+            $table->index(['eps', 'activo']);
         });
     }
 

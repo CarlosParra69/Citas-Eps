@@ -11,9 +11,12 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 
 class AuthController extends Controller
 {
+    /**
+     * Create a new AuthController instance.
+     */
     public function __construct()
     {
-        $this->middleware('auth:api', ['except' => ['login', 'register']]);
+        // Middleware is handled in routes, not in constructor for Laravel 11
     }
 
     public function register(Request $request)
@@ -38,7 +41,7 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $paciente = Paciente::create($request->all());
+        $paciente = Paciente::create(array_merge($request->all(), ['activo' => true]));
         
         // Crear el token JWT inmediatamente después del registro
         $token = JWTAuth::fromUser($paciente);
@@ -113,6 +116,7 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         try {
+            // El middleware ya verificó que el token es válido
             JWTAuth::invalidate(JWTAuth::getToken());
             
             return response()->json([
@@ -122,27 +126,17 @@ class AuthController extends Controller
         } catch (JWTException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error al hacer logout'
+                'message' => 'Error al hacer logout',
+                'error' => $e->getMessage()
             ], 500);
         }
     }
 
-    public function me()
+    public function me(Request $request)
     {
-        try {
-            if (!$paciente = JWTAuth::parseToken()->authenticate()) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Usuario no encontrado'
-                ], 404);
-            }
-        } catch (JWTException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Token inválido'
-            ], 401);
-        }
-
+        // El middleware ya verificó que el usuario está autenticado
+        $paciente = $request->user();
+        
         return response()->json([
             'success' => true,
             'data' => $paciente
@@ -152,6 +146,7 @@ class AuthController extends Controller
     public function refresh()
     {
         try {
+            // El middleware ya verificó que el token es válido
             $newToken = JWTAuth::refresh(JWTAuth::getToken());
             
             return response()->json([
@@ -166,7 +161,8 @@ class AuthController extends Controller
         } catch (JWTException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'No se pudo renovar el token'
+                'message' => 'No se pudo renovar el token',
+                'error' => $e->getMessage()
             ], 401);
         }
     }

@@ -16,10 +16,18 @@ return new class extends Migration
             $table->string('registro_medico')->unique();
             $table->string('telefono')->nullable();
             $table->string('email')->unique();
-            $table->foreignId('especialidad_id')->constrained('especialidades');
+            $table->foreignId('especialidad_id')->constrained('especialidades')->onDelete('restrict');
             $table->json('horarios_atencion'); // JSON con días y horas
+            $table->decimal('tarifa_consulta', 10, 2)->nullable();
+            $table->text('biografia')->nullable();
+            $table->string('foto')->nullable();
             $table->boolean('activo')->default(true);
             $table->timestamps();
+            
+            // Índices para optimización
+            $table->index(['especialidad_id', 'activo']);
+            $table->index(['cedula', 'activo']);
+            $table->index(['email', 'activo']);
         });
     }
 

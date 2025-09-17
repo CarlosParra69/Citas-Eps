@@ -10,7 +10,7 @@ use App\Http\Controllers\Api\CitaController;
 
 /*
 |--------------------------------------------------------------------------
-| API Routes
+| API Routes Citas
 |--------------------------------------------------------------------------
 */
 
@@ -26,7 +26,7 @@ Route::get('/medicos/{id}', [MedicoController::class, 'show']);
 Route::get('/medicos/{id}/disponibilidad', [MedicoController::class, 'disponibilidad']);
 
 // Rutas protegidas con autenticación JWT
-Route::middleware('auth:api')->group(function () {
+Route::middleware('jwt.auth')->group(function () {
     
     // Autenticación
     Route::post('/auth/logout', [AuthController::class, 'logout']);
@@ -49,7 +49,7 @@ Route::middleware('auth:api')->group(function () {
     Route::get('/citas-hoy', [CitaController::class, 'citasHoy']);
     Route::get('/proximas-citas', [CitaController::class, 'proximasCitas']);
     
-    // Reportes y consultas SQL compuestas
+    // Reportes (Consultas SQL Compuestas)
     Route::prefix('reportes')->group(function () {
         Route::get('/dashboard', [App\Http\Controllers\Api\ReportesController::class, 'dashboardResumen']);
         Route::get('/medicos-mas-citas', [App\Http\Controllers\Api\ReportesController::class, 'medicosConMasCitas']);
@@ -60,11 +60,12 @@ Route::middleware('auth:api')->group(function () {
     });
 });
 
-// Ruta de prueba
+// Ruta de test para comprobar el funcionamiento del servidor
 Route::get('/test', function () {
     return response()->json([
         'success' => true,
         'message' => 'API de Citas Médicas funcionando correctamente',
+        'auth_type' => 'JWT',
         'timestamp' => now()
     ]);
 });
