@@ -11,12 +11,10 @@ use Tymon\JWTAuth\Exceptions\JWTException;
 
 class AuthController extends Controller
 {
-    /**
-     * Create a new AuthController instance.
-     */
+    //Correcion de Auth Controller
     public function __construct()
     {
-        // Middleware is handled in routes, not in constructor for Laravel 11
+        
     }
 
     public function register(Request $request)
