@@ -89,7 +89,16 @@ class CitaController extends Controller
             ], 400);
         }
 
-        $cita = Cita::create($request->all());
+        // Asignar estado por defecto si no se proporciona
+        $citaData = $request->all();
+        if (!isset($citaData['estado'])) {
+            $user = $request->user();
+            // Si es paciente, la cita queda pendiente de aprobación
+            // Si es médico o admin, la cita se confirma automáticamente
+            $citaData['estado'] = in_array($user->rol, ['medico', 'superadmin']) ? 'confirmada' : 'programada';
+        }
+
+        $cita = Cita::create($citaData);
         $cita->load(['paciente', 'medico.especialidad']);
 
         return response()->json([
@@ -255,6 +264,109 @@ class CitaController extends Controller
         return response()->json([
             'success' => true,
             'data' => $citas
+        ]);
+    }
+
+    public function citasPendientes($medicoId)
+    {
+        $citas = Cita::conRelaciones()
+                    ->where('medico_id', $medicoId)
+                    ->where('estado', 'programada')
+                    ->orderBy('fecha_hora', 'asc')
+                    ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => $citas
+        ]);
+    }
+
+    public function aprobar(Request $request, $id)
+    {
+        $cita = Cita::find($id);
+
+        if (!$cita) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cita no encontrada'
+            ], 404);
+        }
+
+        $cita->estado = 'confirmada';
+        $cita->observaciones = $request->input('observaciones', $cita->observaciones);
+        $cita->save();
+
+        $cita->load(['paciente', 'medico.especialidad']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cita aprobada exitosamente',
+            'data' => $cita
+        ]);
+    }
+
+    public function rechazar(Request $request, $id)
+    {
+        $cita = Cita::find($id);
+
+        if (!$cita) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cita no encontrada'
+            ], 404);
+        }
+
+        $motivoRechazo = $request->input('motivo_rechazo');
+        if (!$motivoRechazo) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El motivo de rechazo es obligatorio'
+            ], 422);
+        }
+
+        $cita->estado = 'cancelada';
+        $cita->motivo_rechazo = $motivoRechazo;
+        $cita->save();
+
+        $cita->load(['paciente', 'medico.especialidad']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cita rechazada exitosamente',
+            'data' => $cita
+        ]);
+    }
+
+    public function cancelar(Request $request, $id)
+    {
+        $cita = Cita::find($id);
+
+        if (!$cita) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cita no encontrada'
+            ], 404);
+        }
+
+        $motivoCancelacion = $request->input('motivo_cancelacion');
+        if (!$motivoCancelacion) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El motivo de cancelación es obligatorio'
+            ], 422);
+        }
+
+        $cita->estado = 'cancelada';
+        $cita->motivo_cancelacion = $motivoCancelacion;
+        $cita->fecha_cancelacion = now();
+        $cita->save();
+
+        $cita->load(['paciente', 'medico.especialidad']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cita cancelada exitosamente',
+            'data' => $cita
         ]);
     }
 }

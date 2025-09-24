@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\User;
 use App\Models\Paciente;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Hash;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
 
@@ -22,11 +24,12 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'nombre' => 'required|string|max:255',
             'apellido' => 'required|string|max:255',
-            'cedula' => 'required|string|unique:pacientes',
+            'cedula' => 'required|string|unique:users',
             'fecha_nacimiento' => 'required|date',
             'genero' => 'required|in:M,F,Otro',
             'telefono' => 'required|string',
-            'email' => 'required|string|email|unique:pacientes',
+            'email' => 'required|string|email|unique:users',
+            'password' => 'required|string|min:6',
             'direccion' => 'nullable|string',
             'eps' => 'nullable|string',
         ]);
@@ -39,16 +42,41 @@ class AuthController extends Controller
             ], 422);
         }
 
-        $paciente = Paciente::create(array_merge($request->all(), ['activo' => true]));
-        
-        // Crear el token JWT inmediatamente después del registro
-        $token = JWTAuth::fromUser($paciente);
+        // Crear el paciente primero
+        $paciente = Paciente::create([
+            'nombre' => $request->nombre,
+            'apellido' => $request->apellido,
+            'cedula' => $request->cedula,
+            'fecha_nacimiento' => $request->fecha_nacimiento,
+            'genero' => $request->genero,
+            'telefono' => $request->telefono,
+            'email' => $request->email,
+            'direccion' => $request->direccion,
+            'eps' => $request->eps,
+            'activo' => true,
+        ]);
+
+        // Crear el usuario
+        $user = User::create([
+            'name' => $request->name ?? $request->nombre . ' ' . $request->apellido,
+            'nombre' => $request->nombre,
+            'apellido' => $request->apellido,
+            'cedula' => $request->cedula,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+            'rol' => 'paciente',
+            'activo' => true,
+            'paciente_id' => $paciente->id,
+        ]);
+
+        // Crear el token JWT
+        $token = JWTAuth::fromUser($user);
 
         return response()->json([
             'success' => true,
-            'message' => 'Paciente registrado exitosamente',
+            'message' => 'Usuario registrado exitosamente',
             'data' => [
-                'paciente' => $paciente,
+                'user' => $user,
                 'access_token' => $token,
                 'token_type' => 'Bearer',
                 'expires_in' => config('jwt.ttl') * 60 // TTL en segundos
@@ -59,8 +87,8 @@ class AuthController extends Controller
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'cedula' => 'required|string',
             'email' => 'required|email',
+            'password' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -71,13 +99,20 @@ class AuthController extends Controller
             ], 422);
         }
 
-        // Buscar al paciente con las credenciales proporcionadas
-        $paciente = Paciente::where('cedula', $request->cedula)
-                           ->where('email', $request->email)
-                           ->where('activo', true)
-                           ->first();
+        // Buscar al usuario con las credenciales proporcionadas
+        $user = User::where('email', $request->email)
+                    ->where('activo', true)
+                    ->first();
 
-        if (!$paciente) {
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Credenciales incorrectas'
+            ], 401);
+        }
+
+        // Verificar la contraseña usando Hash::check()
+        if (!Hash::check($request->password, $user->password)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Credenciales incorrectas'
@@ -86,7 +121,7 @@ class AuthController extends Controller
 
         try {
             // Crear el token JWT
-            if (!$token = JWTAuth::fromUser($paciente)) {
+            if (!$token = JWTAuth::fromUser($user)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'No se pudo crear el token'
@@ -103,7 +138,7 @@ class AuthController extends Controller
             'success' => true,
             'message' => 'Login exitoso',
             'data' => [
-                'paciente' => $paciente,
+                'user' => $user,
                 'access_token' => $token,
                 'token_type' => 'Bearer',
                 'expires_in' => config('jwt.ttl') * 60 // TTL en segundos
@@ -133,11 +168,11 @@ class AuthController extends Controller
     public function me(Request $request)
     {
         // El middleware ya verificó que el usuario está autenticado
-        $paciente = $request->user();
-        
+        $user = $request->user();
+
         return response()->json([
             'success' => true,
-            'data' => $paciente
+            'data' => $user
         ]);
     }
 

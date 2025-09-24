@@ -230,9 +230,9 @@ class ReportesController extends Controller
     {
         $hoy = Carbon::now();
         $inicioMes = Carbon::now()->startOfMonth();
-        
+
         $resumen = DB::select("
-            SELECT 
+            SELECT
                 (SELECT COUNT(*) FROM pacientes WHERE activo = 1) as total_pacientes_activos,
                 (SELECT COUNT(*) FROM medicos WHERE activo = 1) as total_medicos_activos,
                 (SELECT COUNT(*) FROM especialidades WHERE activo = 1) as total_especialidades,
@@ -247,6 +247,113 @@ class ReportesController extends Controller
             'success' => true,
             'title' => 'Dashboard - Resumen Ejecutivo',
             'data' => $resumen[0] ?? null
+        ]);
+    }
+
+    /**
+     * Dashboard específico para médicos
+     */
+    public function dashboardMedico(Request $request)
+    {
+        $medicoId = $request->user()->medico_id ?? $request->user()->id;
+        $hoy = Carbon::now();
+        $inicioMes = Carbon::now()->startOfMonth();
+
+        $dashboard = DB::select("
+            SELECT
+                (SELECT COUNT(*) FROM citas WHERE medico_id = ? AND estado = 'programada') as citas_pendientes,
+                (SELECT COUNT(*) FROM citas WHERE medico_id = ? AND DATE(fecha_hora) = CURDATE()) as citas_hoy,
+                (SELECT COUNT(*) FROM citas WHERE medico_id = ? AND fecha_hora BETWEEN ? AND ? AND estado = 'completada') as citas_completadas_mes,
+                (SELECT ROUND(AVG(costo), 2) FROM citas WHERE medico_id = ? AND fecha_hora BETWEEN ? AND ? AND estado = 'completada') as promedio_cita_mes,
+                (SELECT COALESCE(SUM(costo), 0) FROM citas WHERE medico_id = ? AND fecha_hora BETWEEN ? AND ? AND estado = 'completada') as ingresos_mes
+        ", [$medicoId, $medicoId, $medicoId, $inicioMes, $hoy, $medicoId, $inicioMes, $hoy, $medicoId, $inicioMes, $hoy]);
+
+        // Próximas citas del médico
+        $proximasCitas = DB::select("
+            SELECT c.*, p.nombre as paciente_nombre, p.apellido as paciente_apellido
+            FROM citas c
+            INNER JOIN pacientes p ON c.paciente_id = p.id
+            WHERE c.medico_id = ? AND c.fecha_hora >= ? AND c.estado IN ('programada', 'confirmada')
+            ORDER BY c.fecha_hora ASC
+            LIMIT 5
+        ", [$medicoId, $hoy]);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'estadisticas' => $dashboard[0] ?? null,
+                'proximas_citas' => $proximasCitas
+            ]
+        ]);
+    }
+
+    /**
+     * Dashboard específico para pacientes
+     */
+    public function dashboardPaciente(Request $request)
+    {
+        $pacienteId = $request->user()->paciente_id ?? $request->user()->id;
+        $hoy = Carbon::now();
+
+        // Próximas citas del paciente
+        $proximasCitas = DB::select("
+            SELECT c.*, m.nombre as medico_nombre, m.apellido as medico_apellido, e.nombre as especialidad
+            FROM citas c
+            INNER JOIN medicos m ON c.medico_id = m.id
+            INNER JOIN especialidades e ON m.especialidad_id = e.id
+            WHERE c.paciente_id = ? AND c.fecha_hora >= ? AND c.estado IN ('programada', 'confirmada')
+            ORDER BY c.fecha_hora ASC
+            LIMIT 5
+        ", [$pacienteId, $hoy]);
+
+        // Historial reciente
+        $historialReciente = DB::select("
+            SELECT c.*, m.nombre as medico_nombre, m.apellido as medico_apellido, e.nombre as especialidad
+            FROM citas c
+            INNER JOIN medicos m ON c.medico_id = m.id
+            INNER JOIN especialidades e ON m.especialidad_id = e.id
+            WHERE c.paciente_id = ? AND c.fecha_hora < ?
+            ORDER BY c.fecha_hora DESC
+            LIMIT 3
+        ", [$pacienteId, $hoy]);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'proximas_citas' => $proximasCitas,
+                'historial_reciente' => $historialReciente
+            ]
+        ]);
+    }
+
+    /**
+     * Estadísticas personales para médicos
+     */
+    public function estadisticasMedico(Request $request, $medicoId = null)
+    {
+        $medicoId = $medicoId ?? ($request->user()->medico_id ?? $request->user()->id);
+        $hoy = Carbon::now();
+        $inicioMes = Carbon::now()->startOfMonth();
+        $inicioAno = Carbon::now()->startOfYear();
+
+        $estadisticas = DB::select("
+            SELECT
+                (SELECT COUNT(*) FROM citas WHERE medico_id = ? AND estado = 'completada') as total_citas_completadas,
+                (SELECT COUNT(*) FROM citas WHERE medico_id = ? AND fecha_hora BETWEEN ? AND ? AND estado = 'completada') as citas_mes_actual,
+                (SELECT COUNT(*) FROM citas WHERE medico_id = ? AND fecha_hora BETWEEN ? AND ? AND estado = 'completada') as citas_ano_actual,
+                (SELECT COUNT(*) FROM citas WHERE medico_id = ? AND estado = 'cancelada') as citas_canceladas,
+                (SELECT COUNT(*) FROM citas WHERE medico_id = ? AND estado = 'no_asistio') as citas_no_asistio,
+                (SELECT ROUND(AVG(costo), 2) FROM citas WHERE medico_id = ? AND estado = 'completada') as promedio_costo_cita,
+                (SELECT COALESCE(SUM(costo), 0) FROM citas WHERE medico_id = ? AND fecha_hora BETWEEN ? AND ? AND estado = 'completada') as ingresos_mes,
+                (SELECT COALESCE(SUM(costo), 0) FROM citas WHERE medico_id = ? AND fecha_hora BETWEEN ? AND ? AND estado = 'completada') as ingresos_ano
+        ", [
+            $medicoId, $medicoId, $inicioMes, $hoy, $medicoId, $inicioAno, $hoy,
+            $medicoId, $medicoId, $medicoId, $medicoId, $inicioMes, $hoy, $medicoId, $inicioAno, $hoy
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'data' => $estadisticas[0] ?? null
         ]);
     }
 }

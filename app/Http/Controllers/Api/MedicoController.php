@@ -38,6 +38,8 @@ class MedicoController extends Controller
 
     public function store(Request $request)
     {
+        // TODO: Implementar verificación de permisos
+
         $validator = Validator::make($request->all(), [
             'nombre' => 'required|string|max:255',
             'apellido' => 'required|string|max:255',
@@ -87,6 +89,8 @@ class MedicoController extends Controller
 
     public function update(Request $request, $id)
     {
+        // TODO: Implementar verificación de permisos
+
         $medico = Medico::find($id);
 
         if (!$medico) {
@@ -128,6 +132,8 @@ class MedicoController extends Controller
 
     public function destroy($id)
     {
+        // TODO: Implementar verificación de permisos
+
         $medico = Medico::find($id);
 
         if (!$medico) {

@@ -23,6 +23,8 @@ class EspecialidadController extends Controller
 
     public function store(Request $request)
     {
+        // TODO: Implementar verificación de permisos
+
         $validator = Validator::make($request->all(), [
             'nombre' => 'required|string|max:255|unique:especialidades',
             'descripcion' => 'nullable|string',
@@ -65,6 +67,8 @@ class EspecialidadController extends Controller
 
     public function update(Request $request, $id)
     {
+        // TODO: Implementar verificación de permisos
+
         $especialidad = Especialidad::find($id);
 
         if (!$especialidad) {
@@ -99,6 +103,8 @@ class EspecialidadController extends Controller
 
     public function destroy($id)
     {
+        // TODO: Implementar verificación de permisos
+
         $especialidad = Especialidad::find($id);
 
         if (!$especialidad) {
