@@ -1,0 +1,216 @@
+<?php
+
+namespace Database\Seeders;
+
+use Illuminate\Database\Seeder;
+use App\Models\Medico;
+use App\Models\Especialidad;
+
+class MedicoSeeder extends Seeder
+{
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
+    {
+        // Obtener todas las especialidades para asignarlas a los médicos
+        $especialidades = Especialidad::all();
+
+        $medicos = [
+            [
+                'nombre' => 'María',
+                'apellido' => 'González',
+                'cedula' => '12345678',
+                'registro_medico' => 'RM001',
+                'telefono' => '3001234567',
+                'email' => 'maria.gonzalez@clinica.com',
+                'especialidad_id' => $especialidades->where('codigo', 'MED001')->first()->id,
+                'horarios_atencion' => json_encode([
+                    'lunes' => ['08:00', '12:00', '14:00', '18:00'],
+                    'martes' => ['08:00', '12:00', '14:00', '18:00'],
+                    'miercoles' => ['08:00', '12:00', '14:00', '18:00'],
+                    'jueves' => ['08:00', '12:00', '14:00', '18:00'],
+                    'viernes' => ['08:00', '12:00', '14:00', '18:00'],
+                ]),
+                'tarifa_consulta' => 50000.00,
+                'biografia' => 'Médica general con más de 10 años de experiencia en atención primaria.',
+                'activo' => true,
+            ],
+            [
+                'nombre' => 'Carlos',
+                'apellido' => 'Rodríguez',
+                'cedula' => '87654321',
+                'registro_medico' => 'RM002',
+                'telefono' => '3007654321',
+                'email' => 'carlos.rodriguez@clinica.com',
+                'especialidad_id' => $especialidades->where('codigo', 'CAR001')->first()->id,
+                'horarios_atencion' => json_encode([
+                    'lunes' => ['09:00', '13:00'],
+                    'martes' => ['09:00', '13:00'],
+                    'miercoles' => ['09:00', '13:00'],
+                    'jueves' => ['09:00', '13:00'],
+                    'viernes' => ['09:00', '13:00'],
+                ]),
+                'tarifa_consulta' => 80000.00,
+                'biografia' => 'Cardiólogo especializado en enfermedades del corazón y sistema circulatorio.',
+                'activo' => true,
+            ],
+            [
+                'nombre' => 'Ana',
+                'apellido' => 'Martínez',
+                'cedula' => '11223344',
+                'registro_medico' => 'RM003',
+                'telefono' => '3011122334',
+                'email' => 'ana.martinez@clinica.com',
+                'especialidad_id' => $especialidades->where('codigo', 'DER001')->first()->id,
+                'horarios_atencion' => json_encode([
+                    'lunes' => ['10:00', '14:00'],
+                    'martes' => ['10:00', '14:00'],
+                    'miercoles' => ['10:00', '14:00'],
+                    'jueves' => ['10:00', '14:00'],
+                    'viernes' => ['10:00', '14:00'],
+                ]),
+                'tarifa_consulta' => 60000.00,
+                'biografia' => 'Dermatóloga experta en cuidado de la piel y tratamientos dermatológicos.',
+                'activo' => true,
+            ],
+            [
+                'nombre' => 'Luis',
+                'apellido' => 'Hernández',
+                'cedula' => '55667788',
+                'registro_medico' => 'RM004',
+                'telefono' => '3005566778',
+                'email' => 'luis.hernandez@clinica.com',
+                'especialidad_id' => $especialidades->where('codigo', 'GIN001')->first()->id,
+                'horarios_atencion' => json_encode([
+                    'lunes' => ['08:00', '12:00'],
+                    'martes' => ['08:00', '12:00'],
+                    'miercoles' => ['08:00', '12:00'],
+                    'jueves' => ['08:00', '12:00'],
+                    'viernes' => ['08:00', '12:00'],
+                ]),
+                'tarifa_consulta' => 70000.00,
+                'biografia' => 'Ginecólogo con especialización en salud reproductiva femenina.',
+                'activo' => true,
+            ],
+            [
+                'nombre' => 'Sofia',
+                'apellido' => 'López',
+                'cedula' => '99887766',
+                'registro_medico' => 'RM005',
+                'telefono' => '3019988776',
+                'email' => 'sofia.lopez@clinica.com',
+                'especialidad_id' => $especialidades->where('codigo', 'PED001')->first()->id,
+                'horarios_atencion' => json_encode([
+                    'lunes' => ['14:00', '18:00'],
+                    'martes' => ['14:00', '18:00'],
+                    'miercoles' => ['14:00', '18:00'],
+                    'jueves' => ['14:00', '18:00'],
+                    'viernes' => ['14:00', '18:00'],
+                ]),
+                'tarifa_consulta' => 55000.00,
+                'biografia' => 'Pediatra especializada en el cuidado y desarrollo infantil.',
+                'activo' => true,
+            ],
+            [
+                'nombre' => 'Diego',
+                'apellido' => 'García',
+                'cedula' => '33445566',
+                'registro_medico' => 'RM006',
+                'telefono' => '3003344556',
+                'email' => 'diego.garcia@clinica.com',
+                'especialidad_id' => $especialidades->where('codigo', 'OFT001')->first()->id,
+                'horarios_atencion' => json_encode([
+                    'lunes' => ['08:00', '12:00'],
+                    'martes' => ['08:00', '12:00'],
+                    'miercoles' => ['08:00', '12:00'],
+                    'jueves' => ['08:00', '12:00'],
+                    'viernes' => ['08:00', '12:00'],
+                ]),
+                'tarifa_consulta' => 65000.00,
+                'biografia' => 'Oftalmólogo experto en salud visual y corrección de problemas de visión.',
+                'activo' => true,
+            ],
+            [
+                'nombre' => 'Patricia',
+                'apellido' => 'Sánchez',
+                'cedula' => '77889900',
+                'registro_medico' => 'RM007',
+                'telefono' => '3017788990',
+                'email' => 'patricia.sanchez@clinica.com',
+                'especialidad_id' => $especialidades->where('codigo', 'TRA001')->first()->id,
+                'horarios_atencion' => json_encode([
+                    'lunes' => ['15:00', '19:00'],
+                    'martes' => ['15:00', '19:00'],
+                    'miercoles' => ['15:00', '19:00'],
+                    'jueves' => ['15:00', '19:00'],
+                    'viernes' => ['15:00', '19:00'],
+                ]),
+                'tarifa_consulta' => 75000.00,
+                'biografia' => 'Traumatóloga especializada en lesiones del sistema músculo-esquelético.',
+                'activo' => true,
+            ],
+            [
+                'nombre' => 'Roberto',
+                'apellido' => 'Pérez',
+                'cedula' => '22334455',
+                'registro_medico' => 'RM008',
+                'telefono' => '3002233445',
+                'email' => 'roberto.perez@clinica.com',
+                'especialidad_id' => $especialidades->where('codigo', 'NEU001')->first()->id,
+                'horarios_atencion' => json_encode([
+                    'lunes' => ['09:00', '13:00'],
+                    'martes' => ['09:00', '13:00'],
+                    'miercoles' => ['09:00', '13:00'],
+                    'jueves' => ['09:00', '13:00'],
+                    'viernes' => ['09:00', '13:00'],
+                ]),
+                'tarifa_consulta' => 90000.00,
+                'biografia' => 'Neurólogo con experiencia en trastornos del sistema nervioso.',
+                'activo' => true,
+            ],
+            [
+                'nombre' => 'Carmen',
+                'apellido' => 'Ruiz',
+                'cedula' => '66778899',
+                'registro_medico' => 'RM009',
+                'telefono' => '3016677889',
+                'email' => 'carmen.ruiz@clinica.com',
+                'especialidad_id' => $especialidades->where('codigo', 'PSI001')->first()->id,
+                'horarios_atencion' => json_encode([
+                    'lunes' => ['10:00', '14:00'],
+                    'martes' => ['10:00', '14:00'],
+                    'miercoles' => ['10:00', '14:00'],
+                    'jueves' => ['10:00', '14:00'],
+                    'viernes' => ['10:00', '14:00'],
+                ]),
+                'tarifa_consulta' => 85000.00,
+                'biografia' => 'Psiquiatra especializada en salud mental y bienestar emocional.',
+                'activo' => true,
+            ],
+            [
+                'nombre' => 'Fernando',
+                'apellido' => 'Morales',
+                'cedula' => '44556677',
+                'registro_medico' => 'RM010',
+                'telefono' => '3004455667',
+                'email' => 'fernando.morales@clinica.com',
+                'especialidad_id' => $especialidades->where('codigo', 'END001')->first()->id,
+                'horarios_atencion' => json_encode([
+                    'lunes' => ['08:00', '12:00'],
+                    'martes' => ['08:00', '12:00'],
+                    'miercoles' => ['08:00', '12:00'],
+                    'jueves' => ['08:00', '12:00'],
+                    'viernes' => ['08:00', '12:00'],
+                ]),
+                'tarifa_consulta' => 70000.00,
+                'biografia' => 'Endocrinólogo experto en trastornos hormonales y metabólicos.',
+                'activo' => true,
+            ],
+        ];
+
+        foreach ($medicos as $medico) {
+            Medico::create($medico);
+        }
+    }
+}

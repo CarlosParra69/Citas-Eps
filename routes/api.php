@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\MedicoController;
 use App\Http\Controllers\Api\PacienteController;
 use App\Http\Controllers\Api\CitaController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\AvatarController;
 
 /*
 |--------------------------------------------------------------------------
@@ -27,7 +28,7 @@ Route::get('/medicos/{id}', [MedicoController::class, 'show']);
 Route::get('/medicos/{id}/disponibilidad', [MedicoController::class, 'disponibilidad']);
 
 // Rutas protegidas con autenticación JWT
-Route::middleware('auth:api')->group(function () {
+Route::middleware(['auth:api'])->group(function () {
     
     // Autenticación
     Route::post('/auth/logout', [AuthController::class, 'logout']);
@@ -75,6 +76,52 @@ Route::middleware('auth:api')->group(function () {
         Route::get('/configuracion', [App\Http\Controllers\Api\UserController::class, 'getNotificacionesConfig']);
         Route::put('/configuracion', [App\Http\Controllers\Api\UserController::class, 'updateNotificacionesConfig']);
     });
+
+    // Avatar
+    Route::prefix('avatar')->group(function () {
+        Route::post('/upload', [AvatarController::class, 'upload']);
+        Route::delete('/delete', [AvatarController::class, 'delete']);
+        Route::get('/get', [AvatarController::class, 'get']);
+    });
+
+    // Test endpoint para verificar autenticación
+    Route::get('/test-auth', function (Request $request) {
+        try {
+            $user = auth()->user();
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuario no autenticado',
+                    'debug' => [
+                        'has_token' => !empty($request->header('Authorization')),
+                        'token_prefix' => $request->header('Authorization') ? substr($request->header('Authorization'), 0, 20) . '...' : null,
+                        'user_agent' => $request->header('User-Agent')
+                    ]
+                ], 401);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Autenticación funcionando correctamente',
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                    'role' => $user->role ? $user->role->name : 'Sin rol'
+                ]
+            ], 200);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error en autenticación',
+                'error' => $e->getMessage(),
+                'debug' => [
+                    'has_token' => !empty($request->header('Authorization')),
+                    'token_prefix' => $request->header('Authorization') ? substr($request->header('Authorization'), 0, 20) . '...' : null
+                ]
+            ], 500);
+        }
+    });
 });
 
 // Ruta de test para comprobar el funcionamiento del servidor
@@ -88,7 +135,7 @@ Route::get('/test', function () {
 });
 
 // Ruta de test protegida para verificar JWT
-Route::middleware('auth:api')->get('/test-protected', function () {
+Route::middleware(['auth:api'])->get('/test-protected', function () {
     return response()->json([
         'success' => true,
         'message' => 'Ruta protegida funcionando correctamente',

@@ -14,10 +14,15 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         // Evitar redirecciones a la ruta 'login' en APIs
         $middleware->redirectGuestsTo(fn () => null);
-        
+
         // Registrar middleware JWT personalizado
         $middleware->alias([
             'jwt.auth' => \App\Http\Middleware\JWTAuthMiddleware::class,
+        ]);
+
+        // Usar el middleware CORS de Laravel
+        $middleware->use([
+            \Illuminate\Http\Middleware\HandleCors::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

@@ -5,11 +5,12 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject
 {
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasApiTokens;
 
     protected $fillable = [
         'name',
@@ -21,7 +22,9 @@ class User extends Authenticatable implements JWTSubject
         'rol',
         'activo',
         'medico_id',
-        'paciente_id'
+        'paciente_id',
+        'role_id',
+        'foto'
     ];
 
     protected $hidden = [
@@ -67,20 +70,35 @@ class User extends Authenticatable implements JWTSubject
         return $this->hasMany(Notificacion::class, 'usuario_id');
     }
 
+    public function role()
+    {
+        return $this->belongsTo(Role::class);
+    }
+
     // Helper methods
     public function isSuperAdmin()
     {
-        return $this->rol === 'superadmin';
+        return $this->role && $this->role->slug === 'superadmin';
     }
 
     public function isMedico()
     {
-        return $this->rol === 'medico';
+        return $this->role && $this->role->slug === 'medico';
     }
 
     public function isPaciente()
     {
-        return $this->rol === 'paciente';
+        return $this->role && $this->role->slug === 'paciente';
+    }
+
+    public function getRoleName()
+    {
+        return $this->role ? $this->role->name : 'Sin rol';
+    }
+
+    public function getRoleSlug()
+    {
+        return $this->role ? $this->role->slug : null;
     }
 
     public function hasPermission($permissionName)

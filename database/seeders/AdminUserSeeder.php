@@ -15,6 +15,8 @@ class AdminUserSeeder extends Seeder
     {
         // Crear usuario admin si no existe
         if (!User::where('email', 'admin@citasmedicas.com')->exists()) {
+            $superadminRole = \App\Models\Role::where('slug', 'superadmin')->first();
+
             User::create([
                 'name' => 'Administrador Sistema',
                 'nombre' => 'Administrador',
@@ -24,6 +26,7 @@ class AdminUserSeeder extends Seeder
                 'password' => Hash::make('admin123'),
                 'rol' => 'superadmin',
                 'activo' => true,
+                'role_id' => $superadminRole ? $superadminRole->id : null,
             ]);
         }
     }

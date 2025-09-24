@@ -19,11 +19,11 @@ class TestUserSeeder extends Seeder
         $paciente = Paciente::create([
             'nombre' => 'Usuario',
             'apellido' => 'Prueba',
-            'cedula' => '1234567890',
+            'cedula' => '9999999999',
             'fecha_nacimiento' => '1990-01-01',
             'genero' => 'M',
             'telefono' => '3001234567',
-            'email' => 'test@example.com',
+            'email' => 'usuario.prueba.test@example.com',
             'direccion' => 'Calle de prueba 123',
             'eps' => 'EPS Prueba',
             'activo' => true,
@@ -31,11 +31,13 @@ class TestUserSeeder extends Seeder
 
         // Crear usuario de prueba
         User::create([
+            'name' => 'Usuario Prueba',
             'nombre' => 'Usuario',
             'apellido' => 'Prueba',
-            'cedula' => '1234567890',
-            'email' => 'test@example.com',
+            'cedula' => '9999999999',
+            'email' => 'usuario.prueba.test@example.com',
             'password' => Hash::make('password123'),
+            'tipo' => 'paciente',
             'rol' => 'paciente',
             'activo' => true,
             'paciente_id' => $paciente->id,

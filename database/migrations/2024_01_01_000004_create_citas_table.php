@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('paciente_id')->constrained('pacientes')->onDelete('restrict');
             $table->foreignId('medico_id')->constrained('medicos')->onDelete('restrict');
             $table->dateTime('fecha_hora');
-            $table->enum('estado', ['programada', 'confirmada', 'en_curso', 'completada', 'cancelada', 'no_asistio'])->default('programada');
+            $table->enum('estado', ['programada', 'confirmada', 'en_curso', 'completada', 'cancelada', 'no_asistio', 'pendiente_aprobacion', 'rechazada'])->default('programada');
             $table->text('motivo_consulta');
             $table->text('observaciones')->nullable();
             $table->text('diagnostico')->nullable();
@@ -25,6 +25,8 @@ return new class extends Migration
             $table->timestamp('fecha_confirmacion')->nullable();
             $table->timestamp('fecha_cancelacion')->nullable();
             $table->text('motivo_cancelacion')->nullable();
+            $table->timestamp('fecha_rechazo')->nullable();
+            $table->text('motivo_rechazo')->nullable();
             $table->timestamps();
             
             // Índices para optimización
