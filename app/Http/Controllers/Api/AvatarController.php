@@ -18,12 +18,22 @@ class AvatarController extends Controller
         try {
             // El usuario ya está autenticado por el middleware JWT
             $user = Auth::user();
+
             if (!$user) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Usuario no autenticado'
                 ], 401);
             }
+
+            if (!$request->hasFile('avatar')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontró el archivo avatar'
+                ], 400);
+            }
+
+            $file = $request->file('avatar');
 
             // Validar la imagen
             $validator = Validator::make($request->all(), [
@@ -39,15 +49,23 @@ class AvatarController extends Controller
             }
 
             // Verificar si hay una imagen anterior y eliminarla
-            if ($user->foto && Storage::disk('public')->exists($user->foto)) {
-                Storage::disk('public')->delete($user->foto);
+            if ($user->foto && Storage::disk('avatars')->exists($user->foto)) {
+                Storage::disk('avatars')->delete($user->foto);
             }
 
             // Generar nombre único para el archivo
-            $fileName = 'avatars/' . time() . '_' . $user->id . '.' . $request->file('avatar')->getClientOriginalExtension();
+            $fileName = time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
 
-            // Guardar la imagen
-            $path = $request->file('avatar')->storeAs('public', $fileName);
+            // Asegurarse de que el directorio existe
+            $avatarDir = storage_path('app/public/avatars');
+            if (!file_exists($avatarDir)) {
+                mkdir($avatarDir, 0755, true);
+            }
+
+            // Usar método directo para evitar problemas de estructura de directorios
+            $avatarDir = storage_path('app/public/avatars');
+            $file->move($avatarDir, $fileName);
+            $path = 'avatars/' . $fileName;
 
             // Actualizar la ruta en la base de datos
             $user->foto = $fileName;
@@ -57,7 +75,7 @@ class AvatarController extends Controller
                 'success' => true,
                 'message' => 'Avatar subido exitosamente',
                 'data' => [
-                    'avatar_url' => asset('storage/' . $fileName),
+                    'avatar_url' => asset('storage/avatars/' . $fileName),
                     'avatar_path' => $fileName
                 ]
             ], 200);
@@ -86,9 +104,9 @@ class AvatarController extends Controller
             }
 
             // Verificar si tiene una foto
-            if ($user->foto && Storage::disk('public')->exists($user->foto)) {
+            if ($user->foto && Storage::disk('avatars')->exists($user->foto)) {
                 // Eliminar la imagen del almacenamiento
-                Storage::disk('public')->delete($user->foto);
+                Storage::disk('avatars')->delete($user->foto);
 
                 // Actualizar la base de datos
                 $user->foto = null;
@@ -128,22 +146,26 @@ class AvatarController extends Controller
                 ], 401);
             }
 
-            $avatarUrl = $user->foto ? asset('storage/' . $user->foto) : null;
+            $avatarUrl = $user->foto ? asset('storage/avatars/' . $user->foto) : null;
 
             return response()->json([
-                'success' => true,
-                'data' => [
-                    'avatar_url' => $avatarUrl,
-                    'avatar_path' => $user->foto
-                ]
-            ], 200);
+                 'success' => true,
+                 'data' => [
+                     'avatar_url' => $avatarUrl,
+                     'avatar_path' => $user->foto
+                 ]
+             ], 200);
 
-        } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al obtener el avatar',
-                'error' => $e->getMessage()
-            ], 500);
-        }
-    }
+         } catch (\Exception $e) {
+             return response()->json([
+                 'success' => false,
+                 'message' => 'Error al obtener el avatar',
+                 'error' => $e->getMessage()
+             ], 500);
+         }
+     }
+
+
+
+
 }

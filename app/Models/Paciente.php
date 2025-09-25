@@ -23,6 +23,9 @@ class Paciente extends Authenticatable implements JWTSubject
         'eps',
         'alergias',
         'medicamentos_actuales',
+        'antecedentes_medicos',
+        'contacto_emergencia',
+        'telefono_emergencia',
         'activo'
     ];
 
@@ -41,6 +44,11 @@ class Paciente extends Authenticatable implements JWTSubject
     public function citasActivas(): HasMany
     {
         return $this->hasMany(Cita::class)->whereIn('estado', ['programada', 'confirmada']);
+    }
+
+    public function user()
+    {
+        return $this->hasOne(User::class);
     }
 
     public function getNombreCompletoAttribute(): string

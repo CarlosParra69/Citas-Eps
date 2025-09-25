@@ -4,6 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Paciente;
+use App\Models\User;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
@@ -46,7 +48,9 @@ class PacienteController extends Controller
             'eps' => 'nullable|string',
             'alergias' => 'nullable|string',
             'medicamentos_actuales' => 'nullable|string',
-            'activo' => 'boolean'
+            'activo' => 'boolean',
+            'password' => 'required|string|min:6',
+            'password_confirmation' => 'required|string|same:password'
         ]);
 
         if ($validator->fails()) {
@@ -57,11 +61,29 @@ class PacienteController extends Controller
             ], 422);
         }
 
-        $paciente = Paciente::create($request->all());
+        // Crear el paciente
+        $paciente = Paciente::create($request->except(['password', 'password_confirmation']));
+
+        // Crear el usuario asociado
+        $user = User::create([
+            'name' => $request->nombre . ' ' . $request->apellido,
+            'nombre' => $request->nombre,
+            'apellido' => $request->apellido,
+            'cedula' => $request->cedula,
+            'email' => $request->email,
+            'password' => bcrypt($request->password),
+            'rol' => 'paciente',
+            'activo' => true,
+            'paciente_id' => $paciente->id,
+            'role_id' => Role::where('slug', 'paciente')->first()->id ?? null
+        ]);
+
+        // Cargar la relación del paciente con el usuario
+        $paciente->load('user');
 
         return response()->json([
             'success' => true,
-            'message' => 'Paciente creado exitosamente',
+            'message' => 'Paciente y usuario creados exitosamente',
             'data' => $paciente
         ], 201);
     }

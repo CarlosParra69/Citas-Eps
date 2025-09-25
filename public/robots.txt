@@ -1,2 +1,7 @@
 User-agent: *
-Disallow:
+Disallow: /storage/
+Disallow: /vendor/
+Disallow: /node_modules/
+Allow: /
+
+Sitemap: http://localhost:8000/sitemap.xml
