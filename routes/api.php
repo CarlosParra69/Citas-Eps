@@ -82,5 +82,6 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/upload', [AvatarController::class, 'upload']);
         Route::delete('/delete', [AvatarController::class, 'delete']);
         Route::get('/get', [AvatarController::class, 'get']);
+        Route::get('/image/{filename}', [AvatarController::class, 'serveImage']);
     });
 });

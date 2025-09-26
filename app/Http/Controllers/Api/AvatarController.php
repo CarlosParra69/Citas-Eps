@@ -49,8 +49,8 @@ class AvatarController extends Controller
             }
 
             // Verificar si hay una imagen anterior y eliminarla
-            if ($user->foto && Storage::disk('avatars')->exists($user->foto)) {
-                Storage::disk('avatars')->delete($user->foto);
+            if ($user->foto && file_exists(public_path('avatars/' . $user->foto))) {
+                unlink(public_path('avatars/' . $user->foto));
             }
 
             // Generar nombre único para el archivo
@@ -62,8 +62,12 @@ class AvatarController extends Controller
                 mkdir($avatarDir, 0755, true);
             }
 
-            // Usar método directo para evitar problemas de estructura de directorios
-            $avatarDir = storage_path('app/public/avatars');
+            // Guardar en public/avatars para evitar problemas con enlaces simbólicos
+            $avatarDir = public_path('avatars');
+            if (!file_exists($avatarDir)) {
+                mkdir($avatarDir, 0755, true);
+            }
+
             $file->move($avatarDir, $fileName);
             $path = 'avatars/' . $fileName;
 
@@ -75,7 +79,7 @@ class AvatarController extends Controller
                 'success' => true,
                 'message' => 'Avatar subido exitosamente',
                 'data' => [
-                    'avatar_url' => asset('storage/avatars/' . $fileName),
+                    'avatar_url' => asset('avatars/' . $fileName),
                     'avatar_path' => $fileName
                 ]
             ], 200);
@@ -104,9 +108,9 @@ class AvatarController extends Controller
             }
 
             // Verificar si tiene una foto
-            if ($user->foto && Storage::disk('avatars')->exists($user->foto)) {
-                // Eliminar la imagen del almacenamiento
-                Storage::disk('avatars')->delete($user->foto);
+            if ($user->foto && file_exists(public_path('avatars/' . $user->foto))) {
+                // Eliminar la imagen del directorio público
+                unlink(public_path('avatars/' . $user->foto));
 
                 // Actualizar la base de datos
                 $user->foto = null;
@@ -146,7 +150,7 @@ class AvatarController extends Controller
                 ], 401);
             }
 
-            $avatarUrl = $user->foto ? asset('storage/avatars/' . $user->foto) : null;
+            $avatarUrl = $user->foto ? asset('avatars/' . $user->foto) : null;
 
             return response()->json([
                  'success' => true,
@@ -164,6 +168,35 @@ class AvatarController extends Controller
              ], 500);
          }
      }
+
+    /**
+     * Servir imagen de avatar directamente (método alternativo)
+     */
+    public function serveImage($filename)
+    {
+        try {
+            $filePath = public_path('avatars/' . $filename);
+
+            if (!file_exists($filePath)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Imagen no encontrada'
+                ], 404);
+            }
+
+            $file = file_get_contents($filePath);
+            $mimeType = mime_content_type($filePath);
+
+            return response($file, 200)->header('Content-Type', $mimeType);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al servir la imagen',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
 
 
 

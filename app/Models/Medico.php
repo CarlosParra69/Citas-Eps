@@ -20,6 +20,8 @@ class Medico extends Model
         'email',
         'especialidad_id',
         'horarios_atencion',
+        'tarifa_consulta',
+        'biografia',
         'activo'
     ];
 
@@ -58,5 +60,10 @@ class Medico extends Model
     public function scopeConEspecialidad($query)
     {
         return $query->with('especialidad');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

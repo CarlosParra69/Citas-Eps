@@ -4,8 +4,11 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Medico;
+use App\Models\User;
+use App\Models\Role;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Auth;
 
 class MedicoController extends Controller
 {
@@ -38,7 +41,13 @@ class MedicoController extends Controller
 
     public function store(Request $request)
     {
-        // TODO: Implementar verificación de permisos
+        // Verificar permisos - solo superadmin puede crear médicos
+        if (!Auth::user() || !Auth::user()->isSuperAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para crear médicos'
+            ], 403);
+        }
 
         $validator = Validator::make($request->all(), [
             'nombre' => 'required|string|max:255',
@@ -49,7 +58,11 @@ class MedicoController extends Controller
             'email' => 'required|email|unique:medicos',
             'especialidad_id' => 'required|exists:especialidades,id',
             'horarios_atencion' => 'required|array',
-            'activo' => 'boolean'
+            'tarifa_consulta' => 'nullable|numeric|min:0',
+            'biografia' => 'nullable|string|max:1000',
+            'activo' => 'boolean',
+            'password' => 'required|string|min:6',
+            'password_confirmation' => 'required|string|same:password'
         ]);
 
         if ($validator->fails()) {
@@ -60,12 +73,29 @@ class MedicoController extends Controller
             ], 422);
         }
 
-        $medico = Medico::create($request->all());
-        $medico->load('especialidad');
+        // Crear el médico
+        $medico = Medico::create($request->except(['password', 'password_confirmation']));
+
+        // Crear el usuario asociado
+        $user = User::create([
+            'name' => $request->nombre . ' ' . $request->apellido,
+            'nombre' => $request->nombre,
+            'apellido' => $request->apellido,
+            'cedula' => $request->cedula,
+            'email' => $request->email,
+            'password' => bcrypt($request->password),
+            'rol' => 'medico',
+            'activo' => true,
+            'medico_id' => $medico->id,
+            'role_id' => Role::where('slug', 'medico')->first()->id ?? null
+        ]);
+
+        // Cargar las relaciones
+        $medico->load('especialidad', 'user');
 
         return response()->json([
             'success' => true,
-            'message' => 'Médico creado exitosamente',
+            'message' => 'Médico y usuario creados exitosamente',
             'data' => $medico
         ], 201);
     }
@@ -89,7 +119,13 @@ class MedicoController extends Controller
 
     public function update(Request $request, $id)
     {
-        // TODO: Implementar verificación de permisos
+        // Verificar permisos - solo superadmin puede actualizar médicos
+        if (!Auth::user() || !Auth::user()->isSuperAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para actualizar médicos'
+            ], 403);
+        }
 
         $medico = Medico::find($id);
 
@@ -109,6 +145,8 @@ class MedicoController extends Controller
             'email' => 'required|email|unique:medicos,email,' . $id,
             'especialidad_id' => 'required|exists:especialidades,id',
             'horarios_atencion' => 'required|array',
+            'tarifa_consulta' => 'nullable|numeric|min:0',
+            'biografia' => 'nullable|string|max:1000',
             'activo' => 'boolean'
         ]);
 
@@ -132,7 +170,13 @@ class MedicoController extends Controller
 
     public function destroy($id)
     {
-        // TODO: Implementar verificación de permisos
+        // Verificar permisos - solo superadmin puede eliminar médicos
+        if (!Auth::user() || !Auth::user()->isSuperAdmin()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para eliminar médicos'
+            ], 403);
+        }
 
         $medico = Medico::find($id);
 
@@ -151,11 +195,16 @@ class MedicoController extends Controller
             ], 400);
         }
 
+        // Eliminar el usuario asociado si existe
+        if ($medico->user) {
+            $medico->user->delete();
+        }
+
         $medico->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Médico eliminado exitosamente'
+            'message' => 'Médico y usuario eliminados exitosamente'
         ]);
     }
 
