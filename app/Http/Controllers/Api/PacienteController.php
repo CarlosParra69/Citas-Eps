@@ -90,7 +90,7 @@ class PacienteController extends Controller
 
     public function show($id)
     {
-        $paciente = Paciente::with(['citas.medico.especialidad'])->find($id);
+        $paciente = Paciente::with(['citas.medico.especialidad', 'user'])->find($id);
 
         if (!$paciente) {
             return response()->json([
@@ -182,7 +182,8 @@ class PacienteController extends Controller
                 $query->where('estado', 'completada')
                       ->with(['medico.especialidad'])
                       ->orderBy('fecha_hora', 'desc');
-            }
+            },
+            'user'
         ])->find($id);
 
         if (!$paciente) {

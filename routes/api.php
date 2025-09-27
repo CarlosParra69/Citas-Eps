@@ -27,6 +27,9 @@ Route::get('/medicos', [MedicoController::class, 'index']);
 Route::get('/medicos/{id}', [MedicoController::class, 'show']);
 Route::get('/medicos/{id}/disponibilidad', [MedicoController::class, 'disponibilidad']);
 
+// Rutas públicas para servir imágenes de avatar
+Route::get('/avatar/image/{filename}', [AvatarController::class, 'serveImage']);
+
 // Rutas protegidas con autenticación JWT
 Route::middleware(['auth:api'])->group(function () {
     
@@ -82,6 +85,6 @@ Route::middleware(['auth:api'])->group(function () {
         Route::post('/upload', [AvatarController::class, 'upload']);
         Route::delete('/delete', [AvatarController::class, 'delete']);
         Route::get('/get', [AvatarController::class, 'get']);
-        Route::get('/image/{filename}', [AvatarController::class, 'serveImage']);
+        Route::get('/user/{userId}', [AvatarController::class, 'getByUserId']);
     });
 });

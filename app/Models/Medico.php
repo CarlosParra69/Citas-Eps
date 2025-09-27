@@ -62,8 +62,13 @@ class Medico extends Model
         return $query->with('especialidad');
     }
 
+    public function scopeConUsuario($query)
+    {
+        return $query->with('user');
+    }
+
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'id', 'medico_id');
     }
 }

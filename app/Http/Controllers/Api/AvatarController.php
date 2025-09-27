@@ -17,13 +17,37 @@ class AvatarController extends Controller
     {
         try {
             // El usuario ya está autenticado por el middleware JWT
-            $user = Auth::user();
+            $currentUser = Auth::user();
 
-            if (!$user) {
+            if (!$currentUser) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Usuario no autenticado'
                 ], 401);
+            }
+
+            // Si se especifica un user_id en la petición, verificar que sea superadmin
+            $targetUserId = $request->input('user_id');
+            $user = null;
+
+            if ($targetUserId) {
+                // Si es superadmin, puede subir avatar para otros usuarios
+                if (!$currentUser->isSuperAdmin()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No tienes permisos para subir avatar para otros usuarios'
+                    ], 403);
+                }
+                $user = \App\Models\User::find($targetUserId);
+                if (!$user) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Usuario objetivo no encontrado'
+                    ], 404);
+                }
+            } else {
+                // Subir avatar para el usuario autenticado
+                $user = $currentUser;
             }
 
             if (!$request->hasFile('avatar')) {
@@ -73,7 +97,7 @@ class AvatarController extends Controller
 
             // Actualizar la ruta en la base de datos
             $user->foto = $fileName;
-            $user->save();
+            $saved = $user->save();
 
             return response()->json([
                 'success' => true,
@@ -170,6 +194,40 @@ class AvatarController extends Controller
      }
 
     /**
+     * Obtener avatar de un usuario específico por ID
+     */
+    public function getByUserId($userId)
+    {
+        try {
+            $user = \App\Models\User::find($userId);
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Usuario no encontrado'
+                ], 404);
+            }
+
+            $avatarUrl = $user->foto ? asset('avatars/' . $user->foto) : null;
+
+            return response()->json([
+                'success' => true,
+                'data' => [
+                    'avatar_url' => $avatarUrl,
+                    'avatar_path' => $user->foto
+                ]
+            ], 200);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al obtener el avatar',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
      * Servir imagen de avatar directamente (método alternativo)
      */
     public function serveImage($filename)
@@ -178,10 +236,8 @@ class AvatarController extends Controller
             $filePath = public_path('avatars/' . $filename);
 
             if (!file_exists($filePath)) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Imagen no encontrada'
-                ], 404);
+                // Devolver una imagen por defecto o una respuesta vacía
+                return response('', 404);
             }
 
             $file = file_get_contents($filePath);
@@ -190,11 +246,8 @@ class AvatarController extends Controller
             return response($file, 200)->header('Content-Type', $mimeType);
 
         } catch (\Exception $e) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Error al servir la imagen',
-                'error' => $e->getMessage()
-            ], 500);
+            // Devolver una respuesta vacía en lugar de JSON
+            return response('', 500);
         }
     }
 

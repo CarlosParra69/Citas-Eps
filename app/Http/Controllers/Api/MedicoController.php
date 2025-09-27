@@ -14,7 +14,7 @@ class MedicoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Medico::conEspecialidad()->activos();
+        $query = Medico::conEspecialidad()->conUsuario()->activos();
 
         // Filtro por especialidad
         if ($request->has('especialidad_id')) {
@@ -31,7 +31,7 @@ class MedicoController extends Controller
             });
         }
 
-        $medicos = $query->get();
+        $medicos = $query->with('user')->get();
 
         return response()->json([
             'success' => true,
@@ -102,7 +102,7 @@ class MedicoController extends Controller
 
     public function show($id)
     {
-        $medico = Medico::conEspecialidad()->find($id);
+        $medico = Medico::conEspecialidad()->conUsuario()->find($id);
 
         if (!$medico) {
             return response()->json([
@@ -159,7 +159,7 @@ class MedicoController extends Controller
         }
 
         $medico->update($request->all());
-        $medico->load('especialidad');
+        $medico->load('especialidad', 'user');
 
         return response()->json([
             'success' => true,
