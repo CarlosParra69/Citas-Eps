@@ -22,7 +22,8 @@ class Medico extends Model
         'horarios_atencion',
         'tarifa_consulta',
         'biografia',
-        'activo'
+        'activo',
+        'disponibilidad'
     ];
 
     protected $casts = [

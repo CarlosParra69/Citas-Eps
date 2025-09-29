@@ -46,15 +46,19 @@ class CitaController extends Controller
 
     public function store(Request $request)
     {
+        \Log::info("=== CREANDO CITA ===");
+        \Log::info("Datos recibidos:", $request->all());
+
         $validator = Validator::make($request->all(), [
             'paciente_id' => 'required|exists:pacientes,id',
             'medico_id' => 'required|exists:medicos,id',
-            'fecha_hora' => 'required|date|after:now',
+            'fecha_hora' => 'required|date',
             'motivo_consulta' => 'required|string',
             'observaciones' => 'nullable|string',
         ]);
 
         if ($validator->fails()) {
+            \Log::error("Errores de validación:", $validator->errors()->toArray());
             return response()->json([
                 'success' => false,
                 'message' => 'Error de validación',
@@ -64,12 +68,15 @@ class CitaController extends Controller
 
         // Verificar disponibilidad del médico
         $fechaHora = Carbon::parse($request->fecha_hora);
+        \Log::info("Verificando disponibilidad para fecha: " . $fechaHora->toDateTimeString());
+
         $citaExistente = Cita::where('medico_id', $request->medico_id)
-                            ->where('fecha_hora', $fechaHora)
-                            ->whereIn('estado', ['programada', 'confirmada'])
-                            ->first();
+                             ->where('fecha_hora', $fechaHora)
+                             ->whereIn('estado', ['programada', 'confirmada'])
+                             ->first();
 
         if ($citaExistente) {
+            \Log::warning("Cita existente encontrada para el médico en esa fecha y hora");
             return response()->json([
                 'success' => false,
                 'message' => 'El médico no está disponible en esa fecha y hora'
@@ -94,12 +101,14 @@ class CitaController extends Controller
         if (!isset($citaData['estado'])) {
             $user = $request->user();
             // Si es paciente, la cita queda pendiente de aprobación
-            // Si es médico o admin, la cita se confirma automáticamente
-            $citaData['estado'] = in_array($user->rol, ['medico', 'superadmin']) ? 'confirmada' : 'programada';
+            // Si es médico o admin, la cita se programa automáticamente
+            $citaData['estado'] = in_array($user->rol, ['medico', 'superadmin']) ? 'programada' : 'pendiente_aprobacion';
         }
 
         $cita = Cita::create($citaData);
         $cita->load(['paciente', 'medico.especialidad']);
+
+        \Log::info("Cita creada exitosamente:", ['cita_id' => $cita->id, 'fecha_hora' => $cita->fecha_hora]);
 
         return response()->json([
             'success' => true,
@@ -140,7 +149,7 @@ class CitaController extends Controller
             'paciente_id' => 'required|exists:pacientes,id',
             'medico_id' => 'required|exists:medicos,id',
             'fecha_hora' => 'required|date',
-            'estado' => 'required|in:programada,confirmada,en_curso,completada,cancelada,no_asistio',
+            'estado' => 'required|in:programada,confirmada,en_curso,completada,cancelada,no_asistio,pendiente_aprobacion,rechazada',
             'motivo_consulta' => 'required|string',
             'observaciones' => 'nullable|string',
             'diagnostico' => 'nullable|string',
@@ -214,7 +223,7 @@ class CitaController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'estado' => 'required|in:programada,confirmada,en_curso,completada,cancelada,no_asistio',
+            'estado' => 'required|in:programada,confirmada,en_curso,completada,cancelada,no_asistio,pendiente_aprobacion,rechazada',
             'observaciones' => 'nullable|string',
             'diagnostico' => 'nullable|string',
             'tratamiento' => 'nullable|string',
@@ -239,12 +248,19 @@ class CitaController extends Controller
         ]);
     }
 
-    public function citasHoy()
+    public function citasHoy(Request $request)
     {
-        $citas = Cita::conRelaciones()
+        $query = Cita::conRelaciones()
                     ->hoy()
-                    ->orderBy('fecha_hora', 'asc')
-                    ->get();
+                    ->whereNotIn('estado', ['completada', 'cancelada', 'no_asistio'])
+                    ->orderBy('fecha_hora', 'asc');
+
+        // Filtro por médico si se proporciona
+        if ($request->has('medico_id')) {
+            $query->where('medico_id', $request->medico_id);
+        }
+
+        $citas = $query->get();
 
         return response()->json([
             'success' => true,
@@ -271,7 +287,7 @@ class CitaController extends Controller
     {
         $citas = Cita::conRelaciones()
                     ->where('medico_id', $medicoId)
-                    ->where('estado', 'programada')
+                    ->where('estado', 'pendiente_aprobacion')
                     ->orderBy('fecha_hora', 'asc')
                     ->get();
 
@@ -292,7 +308,7 @@ class CitaController extends Controller
             ], 404);
         }
 
-        $cita->estado = 'confirmada';
+        $cita->estado = 'programada';
         $cita->observaciones = $request->input('observaciones', $cita->observaciones);
         $cita->save();
 
@@ -366,6 +382,170 @@ class CitaController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Cita cancelada exitosamente',
+            'data' => $cita
+        ]);
+    }
+
+    public function confirmar(Request $request, $id)
+    {
+        $cita = Cita::find($id);
+
+        if (!$cita) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cita no encontrada'
+            ], 404);
+        }
+
+        // Verificar que la cita esté en estado programada
+        if ($cita->estado !== 'programada') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo se pueden confirmar citas que estén en estado programada'
+            ], 400);
+        }
+
+        // Verificar que el usuario autenticado sea el paciente de la cita
+        $user = $request->user();
+        if ($cita->paciente_id !== $user->paciente_id && $cita->paciente_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para confirmar esta cita'
+            ], 403);
+        }
+
+        $cita->estado = 'confirmada';
+        $cita->save();
+
+        $cita->load(['paciente', 'medico.especialidad']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cita confirmada exitosamente',
+            'data' => $cita
+        ]);
+    }
+
+    public function atender(Request $request, $id)
+    {
+        $cita = Cita::find($id);
+
+        if (!$cita) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cita no encontrada'
+            ], 404);
+        }
+
+        // Verificar que la cita esté en estado programada o confirmada
+        if (!in_array($cita->estado, ['programada', 'confirmada'])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo se pueden atender citas que estén en estado programada o confirmada'
+            ], 400);
+        }
+
+        // Verificar que el usuario autenticado sea el médico de la cita
+        $user = $request->user();
+        if ($cita->medico_id !== $user->medico_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para atender esta cita'
+            ], 403);
+        }
+
+        $cita->estado = 'en_curso';
+        $cita->save();
+
+        $cita->load(['paciente', 'medico.especialidad']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Paciente siendo atendido',
+            'data' => $cita
+        ]);
+    }
+
+    public function marcarNoAsistidos()
+    {
+        // Marcar como "no_asistio" las citas de días anteriores que estén en estado programada o confirmada
+        $citasNoAsistidas = Cita::whereIn('estado', ['programada', 'confirmada'])
+            ->whereDate('fecha_hora', '<', date('Y-m-d'))
+            ->update(['estado' => 'no_asistio']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Citas marcadas como no asistidas',
+            'citas_actualizadas' => $citasNoAsistidas
+        ]);
+    }
+
+    public function completar(Request $request, $id)
+    {
+        $cita = Cita::find($id);
+
+        if (!$cita) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cita no encontrada'
+            ], 404);
+        }
+
+        // Verificar que la cita esté en estado en_curso
+        if ($cita->estado !== 'en_curso') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Solo se pueden completar citas que estén en curso'
+            ], 400);
+        }
+
+        // Verificar que el usuario autenticado sea el médico de la cita
+        $user = $request->user();
+        if ($cita->medico_id !== $user->medico_id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'No tienes permisos para completar esta cita'
+            ], 403);
+        }
+
+        $validator = Validator::make($request->all(), [
+            'diagnostico' => 'required|string',
+            'tratamiento' => 'required|string',
+            'costo' => 'required|numeric|min:0',
+            'descuento' => 'nullable|numeric|min:0',
+            'total_pagar' => 'required|numeric|min:0',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Calcular total si no se proporciona
+        $total_pagar = $request->total_pagar;
+        if (!$total_pagar) {
+            $costo = $request->costo;
+            $descuento = $request->descuento ?? 0;
+            $total_pagar = $costo - $descuento;
+        }
+
+        $cita->update([
+            'diagnostico' => $request->diagnostico,
+            'tratamiento' => $request->tratamiento,
+            'costo' => $request->costo,
+            'descuento' => $request->descuento ?? 0,
+            'total_pagar' => $total_pagar,
+            'estado' => 'completada'
+        ]);
+
+        $cita->load(['paciente', 'medico.especialidad']);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Cita completada exitosamente',
             'data' => $cita
         ]);
     }

@@ -26,6 +26,7 @@ Route::get('/especialidades/{id}', [EspecialidadController::class, 'show']);
 Route::get('/medicos', [MedicoController::class, 'index']);
 Route::get('/medicos/{id}', [MedicoController::class, 'show']);
 Route::get('/medicos/{id}/disponibilidad', [MedicoController::class, 'disponibilidad']);
+Route::post('/medicos/{id}/check-availability', [MedicoController::class, 'checkAvailability']);
 
 // Rutas públicas para servir imágenes de avatar
 Route::get('/avatar/image/{filename}', [AvatarController::class, 'serveImage']);
@@ -43,6 +44,7 @@ Route::middleware(['auth:api'])->group(function () {
     
     // Médicos (CRUD completo)
     Route::apiResource('medicos', MedicoController::class)->except(['index', 'show']);
+    Route::patch('/medicos/{id}/disponibilidad', [MedicoController::class, 'updateDisponibilidad']);
     
     // Pacientes (CRUD completo)
     Route::apiResource('pacientes', PacienteController::class);
@@ -60,6 +62,10 @@ Route::middleware(['auth:api'])->group(function () {
     Route::patch('/citas/{id}/aprobar', [CitaController::class, 'aprobar']);
     Route::patch('/citas/{id}/rechazar', [CitaController::class, 'rechazar']);
     Route::patch('/citas/{id}/cancelar', [CitaController::class, 'cancelar']);
+    Route::patch('/citas/{id}/confirmar', [CitaController::class, 'confirmar']);
+    Route::patch('/citas/{id}/atender', [CitaController::class, 'atender']);
+    Route::patch('/citas/{id}/completar', [CitaController::class, 'completar']);
+    Route::post('/citas/marcar-no-asistidos', [CitaController::class, 'marcarNoAsistidos']);
     
     // Reportes (Consultas SQL Compuestas)
     Route::prefix('reportes')->group(function () {
