@@ -134,6 +134,9 @@ class AuthController extends Controller
             ], 500);
         }
 
+        // Cargar las relaciones del usuario según su rol
+        $user->load(['paciente', 'medico']);
+
         return response()->json([
             'success' => true,
             'message' => 'Login exitoso',
@@ -169,6 +172,9 @@ class AuthController extends Controller
     {
         // El middleware ya verificó que el usuario está autenticado
         $user = $request->user();
+
+        // Cargar las relaciones del usuario según su rol
+        $user->load(['paciente', 'medico']);
 
         return response()->json([
             'success' => true,

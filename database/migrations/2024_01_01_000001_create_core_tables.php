@@ -29,23 +29,21 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('nombre');
+            $table->string('apellido');
+            $table->string('cedula')->unique();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->enum('tipo', ['admin', 'medico', 'paciente'])->default('admin');
+            $table->enum('rol', ['superadmin', 'medico', 'paciente'])->default('paciente');
             $table->boolean('activo')->default(true);
+            $table->unsignedBigInteger('medico_id')->nullable();
+            $table->unsignedBigInteger('paciente_id')->nullable();
+            $table->foreignId('role_id')->nullable()->constrained('roles')->onDelete('set null');
+            $table->string('foto')->nullable();
             $table->rememberToken();
             $table->timestamps();
-
-            // Campos adicionales agregados posteriormente
-            $table->string('nombre')->after('name');
-            $table->string('apellido')->after('nombre');
-            $table->string('cedula')->unique()->after('apellido');
-            $table->enum('rol', ['superadmin', 'medico', 'paciente'])->default('paciente')->after('cedula');
-            $table->unsignedBigInteger('medico_id')->nullable()->after('activo');
-            $table->unsignedBigInteger('paciente_id')->nullable()->after('medico_id');
-            $table->foreignId('role_id')->nullable()->after('paciente_id')->constrained('roles')->onDelete('set null');
-            $table->string('foto')->nullable()->after('role_id');
 
             // Índices para optimización
             $table->index(['email', 'activo']);
@@ -83,8 +81,7 @@ return new class extends Migration
             $table->text('biografia')->nullable();
             $table->boolean('activo')->default(true);
             $table->enum('disponibilidad', ['disponible', 'cita_en_curso', 'no_disponible'])
-                  ->default('disponible')
-                  ->after('activo');
+                  ->default('disponible');
             $table->timestamps();
 
             // Índices para optimización

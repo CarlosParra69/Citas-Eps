@@ -48,6 +48,9 @@ class PacienteController extends Controller
             'eps' => 'nullable|string',
             'alergias' => 'nullable|string',
             'medicamentos_actuales' => 'nullable|string',
+            'antecedentes_medicos' => 'nullable|string',
+            'contacto_emergencia' => 'nullable|string',
+            'telefono_emergencia' => 'nullable|string',
             'activo' => 'boolean',
             'password' => 'required|string|min:6',
             'password_confirmation' => 'required|string|same:password'
@@ -84,7 +87,8 @@ class PacienteController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Paciente y usuario creados exitosamente',
-            'data' => $paciente
+            'data' => $paciente,
+            'user' => $user
         ], 201);
     }
 

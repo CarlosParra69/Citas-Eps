@@ -31,8 +31,8 @@ class AvatarController extends Controller
             $user = null;
 
             if ($targetUserId) {
-                // Si es superadmin, puede subir avatar para otros usuarios
-                if (!$currentUser->isSuperAdmin()) {
+                // Si es superadmin o medico, puede subir avatar para otros usuarios
+                if (!$currentUser->isSuperAdmin() && !$currentUser->isMedico()) {
                     return response()->json([
                         'success' => false,
                         'message' => 'No tienes permisos para subir avatar para otros usuarios'
