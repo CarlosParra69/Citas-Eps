@@ -179,30 +179,49 @@ class PacienteController extends Controller
         ]);
     }
 
-    public function historialMedico($id)
+    public function historialMedico(Request $request, $id)
     {
-        $paciente = Paciente::with([
-            'citas' => function($query) {
-                $query->where('estado', 'completada')
-                      ->with(['medico.especialidad'])
-                      ->orderBy('fecha_hora', 'desc');
-            },
-            'user'
-        ])->find($id);
+        $user = $request->user();
 
-        if (!$paciente) {
+        // Verificar permisos: médicos pueden ver cualquier historial, pacientes solo el propio
+        if ($user->rol === 'medico' || ($user->rol === 'paciente' && $user->paciente_id == $id)) {
+            $paciente = Paciente::with([
+                'citas' => function($query) {
+                    $query->with(['medico.especialidad'])
+                          ->orderBy('fecha_hora', 'desc');
+                },
+                'user'
+            ])->find($id);
+
+            if (!$paciente) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Paciente no encontrado'
+                ], 404);
+            }
+
+            // Filtrar citas según el rol
+            $citas = $paciente->citas;
+            if ($user->rol === 'paciente') {
+                // Los pacientes pueden ver todas sus citas (completadas, canceladas, etc.)
+                $citas = $citas; // Sin filtro adicional
+            } else {
+                // Los médicos solo ven citas completadas
+                $citas = $citas->where('estado', 'completada');
+            }
+
             return response()->json([
-                'success' => false,
-                'message' => 'Paciente no encontrado'
-            ], 404);
+                'success' => true,
+                'data' => [
+                    'paciente' => $paciente,
+                    'historial_citas' => $citas
+                ]
+            ]);
         }
 
         return response()->json([
-            'success' => true,
-            'data' => [
-                'paciente' => $paciente,
-                'historial_citas' => $paciente->citas
-            ]
-        ]);
+            'success' => false,
+            'message' => 'No tienes permisos para acceder a este historial médico'
+        ], 403);
     }
 }
