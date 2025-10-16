@@ -3,6 +3,7 @@
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Http\Middleware\HandleCors;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -15,6 +16,8 @@ return Application::configure(basePath: dirname(__DIR__))
         // Evitar redirecciones a la ruta 'login' en APIs
         $middleware->redirectGuestsTo(fn () => null);
 
+        $middleware->append(\App\Http\Middleware\CorsMiddleware::class);
+        $middleware->append(HandleCors::class);
         // Registrar middleware JWT personalizado
         $middleware->alias([
             'jwt.auth' => \App\Http\Middleware\JWTAuthMiddleware::class,
