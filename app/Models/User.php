@@ -27,7 +27,9 @@ class User extends Authenticatable implements JWTSubject
         'foto',
         'antecedentes_medicos',
         'contacto_emergencia',
-        'telefono_emergencia'
+        'telefono_emergencia',
+        'reset_token',
+        'reset_token_expires'
     ];
 
     protected $hidden = [
@@ -39,6 +41,7 @@ class User extends Authenticatable implements JWTSubject
         'email_verified_at' => 'datetime',
         'activo' => 'boolean',
         'password' => 'hashed',
+        'reset_token_expires' => 'datetime',
     ];
 
     // JWT methods

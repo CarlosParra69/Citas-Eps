@@ -8,8 +8,12 @@ use App\Models\Paciente;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Str;
 use Tymon\JWTAuth\Facades\JWTAuth;
 use Tymon\JWTAuth\Exceptions\JWTException;
+use Carbon\Carbon;
 
 class AuthController extends Controller
 {
@@ -204,5 +208,116 @@ class AuthController extends Controller
                 'error' => $e->getMessage()
             ], 401);
         }
+    }
+
+    public function forgotPassword(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error de validación',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Buscar al usuario por email
+            $user = User::where('email', $request->email)
+                        ->where('activo', true)
+                        ->first();
+
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se encontró un usuario con ese correo electrónico'
+                ], 404);
+            }
+
+            // Generar token de recuperación
+            $token = Str::random(60);
+            $expiresAt = Carbon::now()->addHours(1); // Token válido por 1 hora
+
+            // Guardar token en la base de datos
+            $user->reset_token = $token;
+            $user->reset_token_expires = $expiresAt;
+            $user->save();
+
+            // Enviar email con el enlace de recuperación
+            Mail::send('emails.password-reset', [
+                'user' => $user,
+                'token' => $token,
+                'resetUrl' => url("/reset-password.html?token={$token}&email=" . urlencode($user->email))
+            ], function ($message) use ($user) {
+                $message->to($user->email)
+                        ->subject('Recuperación de Contraseña - MediApp');
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Se ha enviado un correo electrónico con instrucciones para recuperar tu contraseña'
+            ]);
+
+        } catch (\Exception $e) {
+            \Log::error('Error en forgotPassword: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Error al enviar el correo electrónico. Por favor, inténtalo de nuevo más tarde.',
+                'error' => $e->getMessage(),
+                'debug_info' => [
+                    'email' => $request->email,
+                    'user_found' => isset($user),
+                    'token_generated' => isset($token),
+                    'mail_config' => config('mail')
+                ]
+            ], 500);
+        }
+    }
+
+    public function resetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'token' => 'required|string',
+            'password' => 'required|string|min:6|confirmed',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+
+        // Buscar al usuario con el token y email válidos
+        $user = User::where('email', $request->email)
+                    ->where('reset_token', $request->token)
+                    ->where('reset_token_expires', '>', Carbon::now())
+                    ->where('activo', true)
+                    ->first();
+
+        if (!$user) {
+            return response()->json([
+                'success' => false,
+                'message' => 'El token de recuperación es inválido o ha expirado'
+            ], 400);
+        }
+
+        // Actualizar contraseña y limpiar token
+        $user->password = Hash::make($request->password);
+        $user->reset_token = null;
+        $user->reset_token_expires = null;
+        $user->save();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Contraseña actualizada exitosamente'
+        ]);
     }
 }

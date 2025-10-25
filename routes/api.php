@@ -19,6 +19,56 @@ use App\Http\Controllers\Api\AvatarController;
 // Rutas públicas
 Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
+Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+
+// Ruta de prueba para debugging
+Route::get('/test-email', function() {
+    try {
+        \Mail::raw('Este es un email de prueba desde MediApp', function ($message) {
+            $message->to('carlosalbertoparrabejarano@gmail.com')
+                    ->subject('Email de Prueba - MediApp');
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Email de prueba enviado correctamente',
+            'mail_config' => config('mail'),
+            'note' => 'Revisa tu bandeja de entrada, spam, y correos sociales'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage(),
+            'mail_config' => config('mail'),
+            'trace' => $e->getTraceAsString()
+        ], 500);
+    }
+});
+
+// Ruta para obtener el enlace de recuperación directamente (para desarrollo)
+Route::get('/get-reset-link/{email}', function($email) {
+    try {
+        $user = \App\Models\User::where('email', $email)->where('activo', true)->first();
+
+        if (!$user) {
+            return response()->json(['error' => 'Usuario no encontrado'], 404);
+        }
+
+        $token = 'DEV-TOKEN-' . time(); // Token de desarrollo
+        $resetUrl = "http://localhost:8000/reset-password.html?token={$token}&email=" . urlencode($user->email);
+
+        return response()->json([
+            'success' => true,
+            'reset_url' => $resetUrl,
+            'token' => $token,
+            'email' => $user->email,
+            'note' => 'Usa este enlace directamente para desarrollo'
+        ]);
+    } catch (\Exception $e) {
+        return response()->json(['error' => $e->getMessage()], 500);
+    }
+});
 
 // Rutas públicas para consultar especialidades y médicos
 Route::get('/especialidades', [EspecialidadController::class, 'index']);
