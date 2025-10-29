@@ -283,13 +283,21 @@ class CitaController extends Controller
         ]);
     }
 
-    public function citasPendientes($medicoId)
+    public function citasPendientes($medicoId = null)
     {
-        $citas = Cita::conRelaciones()
-                    ->where('medico_id', $medicoId)
+        $query = Cita::conRelaciones()
                     ->where('estado', 'pendiente_aprobacion')
-                    ->orderBy('fecha_hora', 'asc')
-                    ->get();
+                    ->orderBy('fecha_hora', 'asc');
+
+        // Si se proporciona un medicoId específico, filtrar por él
+        if ($medicoId) {
+            $query->where('medico_id', $medicoId);
+        }
+
+        // Si no se proporciona medicoId (null), mostrar todas las citas pendientes
+        // que es lo que necesita el superadministrador
+
+        $citas = $query->get();
 
         return response()->json([
             'success' => true,
@@ -405,9 +413,9 @@ class CitaController extends Controller
             ], 400);
         }
 
-        // Verificar que el usuario autenticado sea el paciente de la cita
+        // Verificar que el usuario autenticado sea el paciente de la cita o superadministrador
         $user = $request->user();
-        if ($cita->paciente_id !== $user->paciente_id && $cita->paciente_id !== $user->id) {
+        if ($user->rol !== 'superadmin' && $cita->paciente_id !== $user->paciente_id && $cita->paciente_id !== $user->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'No tienes permisos para confirmar esta cita'
@@ -445,9 +453,9 @@ class CitaController extends Controller
             ], 400);
         }
 
-        // Verificar que el usuario autenticado sea el médico de la cita
+        // Verificar que el usuario autenticado sea el médico de la cita o superadministrador
         $user = $request->user();
-        if ($cita->medico_id !== $user->medico_id) {
+        if ($user->rol !== 'superadmin' && $cita->medico_id !== $user->medico_id) {
             return response()->json([
                 'success' => false,
                 'message' => 'No tienes permisos para atender esta cita'
@@ -499,9 +507,9 @@ class CitaController extends Controller
             ], 400);
         }
 
-        // Verificar que el usuario autenticado sea el médico de la cita
+        // Verificar que el usuario autenticado sea el médico de la cita o superadministrador
         $user = $request->user();
-        if ($cita->medico_id !== $user->medico_id) {
+        if ($user->rol !== 'superadmin' && $cita->medico_id !== $user->medico_id) {
             return response()->json([
                 'success' => false,
                 'message' => 'No tienes permisos para completar esta cita'

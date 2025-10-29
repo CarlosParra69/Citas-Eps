@@ -110,7 +110,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::patch('/citas/{id}/estado', [CitaController::class, 'cambiarEstado']);
     Route::get('/citas-hoy', [CitaController::class, 'citasHoy']);
     Route::get('/proximas-citas', [CitaController::class, 'proximasCitas']);
-    Route::get('/citas-pendientes/{medicoId}', [CitaController::class, 'citasPendientes']);
+    Route::get('/citas-pendientes/{medicoId?}', [CitaController::class, 'citasPendientes']);
     Route::patch('/citas/{id}/aprobar', [CitaController::class, 'aprobar']);
     Route::patch('/citas/{id}/rechazar', [CitaController::class, 'rechazar']);
     Route::patch('/citas/{id}/cancelar', [CitaController::class, 'cancelar']);
