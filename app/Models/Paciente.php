@@ -51,6 +51,11 @@ class Paciente extends Authenticatable implements JWTSubject
         return $this->hasOne(User::class);
     }
 
+    public function historialesMedicos()
+    {
+        return $this->hasMany(HistorialMedico::class);
+    }
+
     public function getNombreCompletoAttribute(): string
     {
         return $this->nombre . ' ' . $this->apellido;

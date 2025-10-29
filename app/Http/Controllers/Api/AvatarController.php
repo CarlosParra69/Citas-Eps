@@ -251,7 +251,89 @@ class AvatarController extends Controller
         }
     }
 
+    /**
+     * Subir avatar de usuario sin autenticación (para registro público)
+     */
+    public function uploadPublic(Request $request)
+    {
+            try {
+                // Validar que se proporcione el user_id
+                $userId = $request->input('user_id');
+                if (!$userId) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Se requiere el ID del usuario'
+                    ], 400);
+                }
+    
+                // Buscar el usuario por ID
+                $user = \App\Models\User::find($userId);
+                if (!$user) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Usuario no encontrado'
+                    ], 404);
+                }
+    
+                if (!$request->hasFile('avatar')) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No se encontró el archivo avatar'
+                    ], 400);
+                }
+    
+                $file = $request->file('avatar');
+    
+                // Validar la imagen
+                $validator = Validator::make($request->all(), [
+                    'avatar' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048', // 2MB máximo
+                ]);
+    
+                if ($validator->fails()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Imagen inválida',
+                        'errors' => $validator->errors()
+                    ], 422);
+                }
+    
+                // Verificar si hay una imagen anterior y eliminarla
+                if ($user->foto && file_exists(public_path('avatars/' . $user->foto))) {
+                    unlink(public_path('avatars/' . $user->foto));
+                }
+    
+                // Generar nombre único para el archivo
+                $fileName = time() . '_' . $user->id . '.' . $file->getClientOriginalExtension();
+    
+                // Asegurarse de que el directorio existe
+                $avatarDir = public_path('avatars');
+                if (!file_exists($avatarDir)) {
+                    mkdir($avatarDir, 0755, true);
+                }
+    
+                $file->move($avatarDir, $fileName);
+                $path = 'avatars/' . $fileName;
+    
+                // Actualizar la ruta en la base de datos
+                $user->foto = $fileName;
+                $saved = $user->save();
+    
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Avatar subido exitosamente',
+                    'data' => [
+                        'avatar_url' => asset('avatars/' . $fileName),
+                        'avatar_path' => $fileName
+                    ]
+                ], 200);
+    
+            } catch (\Exception $e) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error al subir el avatar',
+                    'error' => $e->getMessage()
+                ], 500);
+            }
+        }
 
-
-
-}
+    }

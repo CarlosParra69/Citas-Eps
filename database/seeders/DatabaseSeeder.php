@@ -15,6 +15,7 @@ class DatabaseSeeder extends Seeder
             RoleSeeder::class,
             AdminUserSeeder::class,
             EspecialidadSeeder::class,
+            HistorialMedicoSeeder::class,
         ]);
     }
 }

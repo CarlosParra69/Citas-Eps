@@ -21,6 +21,7 @@ Route::post('/auth/register', [AuthController::class, 'register']);
 Route::post('/auth/login', [AuthController::class, 'login']);
 Route::post('/auth/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/auth/reset-password', [AuthController::class, 'resetPassword']);
+Route::post('/pacientes/register', [PacienteController::class, 'store']);
 
 // Ruta de prueba para debugging
 Route::get('/test-email', function() {
@@ -80,6 +81,7 @@ Route::post('/medicos/{id}/check-availability', [MedicoController::class, 'check
 
 // Rutas públicas para servir imágenes de avatar
 Route::get('/avatar/image/{filename}', [AvatarController::class, 'serveImage']);
+Route::post('/avatar/upload-public', [AvatarController::class, 'uploadPublic']);
 
 // Rutas protegidas con autenticación JWT
 Route::middleware(['auth:api'])->group(function () {

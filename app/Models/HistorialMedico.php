@@ -37,10 +37,18 @@ class HistorialMedico extends Model
     ];
 
     /**
-     * Relación con el paciente
-     */
+      * Relación con el paciente
+      */
     public function paciente()
     {
         return $this->belongsTo(Paciente::class);
+    }
+
+    /**
+      * Relación con el médico
+      */
+    public function medico()
+    {
+        return $this->belongsTo(Medico::class);
     }
 }

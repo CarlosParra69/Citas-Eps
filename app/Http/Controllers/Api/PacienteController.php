@@ -74,6 +74,7 @@ class PacienteController extends Controller
             'apellido' => $request->apellido,
             'cedula' => $request->cedula,
             'email' => $request->email,
+            'telefono' => $request->telefono,
             'password' => bcrypt($request->password),
             'rol' => 'paciente',
             'activo' => true,
@@ -121,18 +122,18 @@ class PacienteController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'nombre' => 'required|string|max:255',
-            'apellido' => 'required|string|max:255',
-            'cedula' => 'required|string|unique:pacientes,cedula,' . $id,
-            'fecha_nacimiento' => 'required|date',
-            'genero' => 'required|in:M,F,Otro',
-            'telefono' => 'required|string',
-            'email' => 'required|email|unique:pacientes,email,' . $id,
-            'direccion' => 'nullable|string',
-            'eps' => 'nullable|string',
-            'alergias' => 'nullable|string',
-            'medicamentos_actuales' => 'nullable|string',
-            'activo' => 'boolean'
+            'nombre' => 'sometimes|required|string|max:255',
+            'apellido' => 'sometimes|required|string|max:255',
+            'cedula' => 'sometimes|required|string|unique:pacientes,cedula,' . $id,
+            'fecha_nacimiento' => 'sometimes|required|date',
+            'genero' => 'sometimes|required|in:M,F,Otro',
+            'telefono' => 'sometimes|required|string',
+            'email' => 'sometimes|required|email|unique:pacientes,email,' . $id,
+            'direccion' => 'sometimes|nullable|string',
+            'eps' => 'sometimes|nullable|string',
+            'alergias' => 'sometimes|nullable|string',
+            'medicamentos_actuales' => 'sometimes|nullable|string',
+            'activo' => 'sometimes|boolean'
         ]);
 
         if ($validator->fails()) {
@@ -144,6 +145,11 @@ class PacienteController extends Controller
         }
 
         $paciente->update($request->all());
+
+        // Actualizar el usuario asociado con el teléfono
+        if ($paciente->user) {
+            $paciente->user->update(['telefono' => $request->telefono]);
+        }
 
         return response()->json([
             'success' => true,
@@ -183,12 +189,12 @@ class PacienteController extends Controller
     {
         $user = $request->user();
 
-        // Verificar permisos: médicos pueden ver cualquier historial, pacientes solo el propio
-        if ($user->rol === 'medico' || ($user->rol === 'paciente' && $user->paciente_id == $id)) {
+        // Verificar permisos: médicos, superadmin y pacientes pueden ver cualquier historial
+        if ($user->isMedico() || $user->isSuperAdmin() || $user->isPaciente()) {
             $paciente = Paciente::with([
-                'citas' => function($query) {
+                'historialesMedicos' => function($query) {
                     $query->with(['medico.especialidad'])
-                          ->orderBy('fecha_hora', 'desc');
+                          ->orderBy('fecha_consulta', 'desc');
                 },
                 'user'
             ])->find($id);
@@ -200,22 +206,12 @@ class PacienteController extends Controller
                 ], 404);
             }
 
-            // Filtrar citas según el rol
-            $citas = $paciente->citas;
-            if ($user->rol === 'paciente') {
-                // Los pacientes pueden ver todas sus citas (completadas, canceladas, etc.)
-                $citas = $citas; // Sin filtro adicional
-            } else {
-                // Los médicos solo ven citas completadas
-                $citas = $citas->where('estado', 'completada');
-            }
+            // Obtener historiales médicos
+            $historiales = $paciente->historialesMedicos;
 
             return response()->json([
                 'success' => true,
-                'data' => [
-                    'paciente' => $paciente,
-                    'historial_citas' => $citas
-                ]
+                'data' => $historiales
             ]);
         }
 

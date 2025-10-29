@@ -14,7 +14,21 @@ class MedicoController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Medico::conEspecialidad()->conUsuario()->activos();
+        $query = Medico::conEspecialidad()->conUsuario();
+
+        // Filtro por estado activo/inactivo
+        if ($request->has('activo')) {
+            $activo = $request->activo;
+            if ($activo == 1) {
+                $query->where('activo', true);
+            } elseif ($activo == 0) {
+                $query->where('activo', false);
+            }
+            // Si se especifica el filtro (incluso si es null o vacío), no aplicar el scope por defecto
+        } else {
+            // Por defecto mostrar todos los médicos si no se especifica filtro
+            // No aplicar ningún filtro de estado
+        }
 
         // Filtro por especialidad
         if ($request->has('especialidad_id')) {
@@ -83,6 +97,7 @@ class MedicoController extends Controller
             'apellido' => $request->apellido,
             'cedula' => $request->cedula,
             'email' => $request->email,
+            'telefono' => $request->telefono,
             'password' => bcrypt($request->password),
             'rol' => 'medico',
             'activo' => true,
@@ -137,17 +152,17 @@ class MedicoController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'nombre' => 'required|string|max:255',
-            'apellido' => 'required|string|max:255',
-            'cedula' => 'required|string|unique:medicos,cedula,' . $id,
-            'registro_medico' => 'required|string|unique:medicos,registro_medico,' . $id,
-            'telefono' => 'nullable|string',
-            'email' => 'required|email|unique:medicos,email,' . $id,
-            'especialidad_id' => 'required|exists:especialidades,id',
-            'horarios_atencion' => 'required|array',
-            'tarifa_consulta' => 'nullable|numeric|min:0',
-            'biografia' => 'nullable|string|max:1000',
-            'activo' => 'boolean'
+            'nombre' => 'sometimes|required|string|max:255',
+            'apellido' => 'sometimes|required|string|max:255',
+            'cedula' => 'sometimes|required|string|unique:medicos,cedula,' . $id,
+            'registro_medico' => 'sometimes|required|string|unique:medicos,registro_medico,' . $id,
+            'telefono' => 'sometimes|nullable|string',
+            'email' => 'sometimes|required|email|unique:medicos,email,' . $id,
+            'especialidad_id' => 'sometimes|required|exists:especialidades,id',
+            'horarios_atencion' => 'sometimes|required|array',
+            'tarifa_consulta' => 'sometimes|nullable|numeric|min:0',
+            'biografia' => 'sometimes|nullable|string|max:1000',
+            'activo' => 'sometimes|boolean'
         ]);
 
         if ($validator->fails()) {
@@ -159,6 +174,12 @@ class MedicoController extends Controller
         }
 
         $medico->update($request->all());
+
+        // Actualizar el usuario asociado con el teléfono
+        if ($medico->user) {
+            $medico->user->update(['telefono' => $request->telefono]);
+        }
+
         $medico->load('especialidad', 'user');
 
         return response()->json([

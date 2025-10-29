@@ -31,8 +31,17 @@ class UserController extends Controller
             $query->where('rol', $request->rol);
         }
 
-        if ($request->has('estado')) {
-            $query->where('estado', $request->estado);
+        if ($request->has('activo') && $request->activo !== null && $request->activo !== '') {
+            $activo = $request->activo;
+            if ($activo == 1) {
+                $query->where('activo', true);
+            } elseif ($activo == 0) {
+                $query->where('activo', false);
+            }
+            // Si activo es null o vacío, no aplicar filtro (mostrar todos)
+        } else {
+            // Por defecto mostrar TODOS los usuarios (activos e inactivos) si no se especifica filtro
+            // No aplicar ningún filtro restrictivo
         }
 
         if ($request->has('search')) {
@@ -106,7 +115,7 @@ class UserController extends Controller
             'genero' => $request->genero,
             'rol' => $request->rol,
             'password' => Hash::make($request->password),
-            'estado' => 'activo',
+            'activo' => 1,
         ]);
 
         return response()->json([
@@ -158,7 +167,7 @@ class UserController extends Controller
             'fecha_nacimiento' => 'nullable|date',
             'genero' => 'nullable|in:M,F',
             'rol' => 'sometimes|required|in:paciente,medico,superadmin',
-            'estado' => 'sometimes|required|in:activo,inactivo',
+            'activo' => 'sometimes|required|in:1,0',
         ]);
 
         if ($validator->fails()) {
@@ -171,7 +180,7 @@ class UserController extends Controller
 
         $usuario->update($request->only([
             'nombre', 'apellido', 'email', 'cedula', 'telefono',
-            'fecha_nacimiento', 'genero', 'rol', 'estado'
+            'fecha_nacimiento', 'genero', 'rol', 'activo'
         ]));
 
         return response()->json([
@@ -226,7 +235,7 @@ class UserController extends Controller
         $usuario = User::findOrFail($id);
 
         $validator = Validator::make($request->all(), [
-            'estado' => 'required|in:activo,inactivo',
+            'activo' => 'required|in:1,0',
         ]);
 
         if ($validator->fails()) {
@@ -237,7 +246,7 @@ class UserController extends Controller
             ], 422);
         }
 
-        $usuario->update(['estado' => $request->estado]);
+        $usuario->update(['activo' => $request->activo]);
 
         return response()->json([
             'success' => true,
