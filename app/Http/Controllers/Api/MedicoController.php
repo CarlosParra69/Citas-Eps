@@ -6,12 +6,15 @@ use App\Http\Controllers\Controller;
 use App\Models\Medico;
 use App\Models\User;
 use App\Models\Role;
+use App\Traits\SyncUserData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
 
 class MedicoController extends Controller
 {
+    use SyncUserData;
+
     public function index(Request $request)
     {
         $query = Medico::conEspecialidad()->conUsuario();
@@ -175,10 +178,8 @@ class MedicoController extends Controller
 
         $medico->update($request->all());
 
-        // Actualizar el usuario asociado con el teléfono
-        if ($medico->user) {
-            $medico->user->update(['telefono' => $request->telefono]);
-        }
+        // Sincronizar datos con la tabla users usando el trait
+        $this->syncUserData($request, $medico->user);
 
         $medico->load('especialidad', 'user');
 

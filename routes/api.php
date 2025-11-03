@@ -104,6 +104,7 @@ Route::middleware(['auth:api'])->group(function () {
     
     // Usuarios (CRUD completo para superadmin)
     Route::apiResource('usuarios', UserController::class);
+    Route::patch('/usuarios/{id}/estado', [UserController::class, 'cambiarEstado']);
 
     // Citas (CRUD completo)
     Route::apiResource('citas', CitaController::class);

@@ -6,14 +6,28 @@ use App\Http\Controllers\Controller;
 use App\Models\Paciente;
 use App\Models\User;
 use App\Models\Role;
+use App\Traits\SyncUserData;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class PacienteController extends Controller
 {
+    use SyncUserData;
+
     public function index(Request $request)
     {
-        $query = Paciente::activos();
+        // NO filtrar automáticamente por activo - permitir todos los pacientes por defecto
+        $query = Paciente::query();
+
+        // Filtrar por estado activo/inactivo si se especifica
+        if ($request->has('activo')) {
+            $activo = $request->activo;
+            if ($activo === '0' || $activo === 0) {
+                $query->where('activo', false);
+            } elseif ($activo === '1' || $activo === 1) {
+                $query->where('activo', true);
+            }
+        }
 
         // Búsqueda por nombre, apellido o cédula
         if ($request->has('search')) {
@@ -146,10 +160,8 @@ class PacienteController extends Controller
 
         $paciente->update($request->all());
 
-        // Actualizar el usuario asociado con el teléfono
-        if ($paciente->user) {
-            $paciente->user->update(['telefono' => $request->telefono]);
-        }
+        // Sincronizar datos con la tabla users usando el trait
+        $this->syncUserData($request, $paciente->user);
 
         return response()->json([
             'success' => true,

@@ -4,13 +4,18 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Models\Medico;
+use App\Models\Paciente;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Gate;
+use App\Traits\SyncUserData;
 
 class UserController extends Controller
 {
+    use SyncUserData;
+
     /**
      * Display a listing of users.
      */
@@ -183,6 +188,11 @@ class UserController extends Controller
             'fecha_nacimiento', 'genero', 'rol', 'activo'
         ]));
 
+        // Sincronización bidireccional si se actualizó el estado activo
+        if ($request->has('activo')) {
+            $this->syncBidirectional($usuario, $request->activo);
+        }
+
         return response()->json([
             'success' => true,
             'data' => $usuario,
@@ -248,11 +258,46 @@ class UserController extends Controller
 
         $usuario->update(['activo' => $request->activo]);
 
+        // Sincronización bidireccional: actualizar también el médico/paciente asociado
+        $this->syncBidirectional($usuario, $request->activo);
+
         return response()->json([
             'success' => true,
             'data' => $usuario,
             'message' => 'Estado del usuario actualizado correctamente'
         ]);
+    }
+
+    /**
+     * Sincronización bidireccional del estado activo
+     */
+    private function syncBidirectional(User $usuario, $nuevoEstado)
+    {
+        try {
+            // Si es médico, actualizar médico asociado
+            if ($usuario->medico_id) {
+                $medico = Medico::find($usuario->medico_id);
+                if ($medico) {
+                    $medico->update(['activo' => $nuevoEstado]);
+                }
+            }
+
+            // Si es paciente, actualizar paciente asociado
+            if ($usuario->paciente_id) {
+                $paciente = Paciente::find($usuario->paciente_id);
+                if ($paciente) {
+                    $paciente->update(['activo' => $nuevoEstado]);
+                }
+            }
+        } catch (\Exception $e) {
+            // Log del error pero no fallar la operación principal
+            \Log::error('Error en sincronización bidireccional: ' . $e->getMessage(), [
+                'user_id' => $usuario->id,
+                'medico_id' => $usuario->medico_id,
+                'paciente_id' => $usuario->paciente_id,
+                'nuevo_estado' => $nuevoEstado
+            ]);
+        }
     }
 
     /**
